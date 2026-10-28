@@ -57,10 +57,12 @@ export function Layout() {
         </nav>
 
         <div className="sidebar-foot">
-          <a className="nav-link" href="/api/docs" target="_blank" rel="noreferrer">
-            <span className="nav-dot" />
-            API / OpenAPI
-          </a>
+          {import.meta.env.DEV ? (
+            <a className="nav-link" href="/api/docs" target="_blank" rel="noreferrer">
+              <span className="nav-dot" />
+              API / OpenAPI
+            </a>
+          ) : null}
           <div className="sidebar-user">
             <span className="avatar">{(user?.full_name ?? "?").slice(0, 1).toUpperCase()}</span>
             <div>

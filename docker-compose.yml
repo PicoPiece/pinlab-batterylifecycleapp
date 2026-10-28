@@ -21,6 +21,7 @@ services:
     cpus: 1.0
 
   backend:
+    image: pinlab-app-backend:${APP_IMAGE_TAG:-latest}
     build:
       context: ./backend
     restart: unless-stopped
@@ -30,6 +31,7 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-production}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
+      ENABLE_DOCS: ${ENABLE_DOCS:-true}
       UPLOAD_DIR: /data/uploads
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-20}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
@@ -52,6 +54,7 @@ services:
     cpus: 1.0
 
   frontend:
+    image: pinlab-app-frontend:${APP_IMAGE_TAG:-latest}
     build:
       context: ./frontend
     restart: unless-stopped

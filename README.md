@@ -143,6 +143,19 @@ Migration đầu tiên: `alembic/versions/5e56d69bbfb0_initial_schema.py`.
 
 ## 7. Bảo mật
 
+### Production hardening
+
+- `COOKIE_SECURE=true` khi chạy sau HTTPS.
+- `ENVIRONMENT=production`.
+- `ENABLE_DOCS=false` để tắt `/api/docs` và `/api/openapi.json`.
+- `CORS_ORIGINS=https://pinlab-app.picopiece.com`.
+- Login rate limit: 5 lần sai / 15 phút cho mỗi IP+email; khóa tạm 15 phút, không vĩnh viễn.
+- CSRF origin guard cho POST/PATCH/DELETE khi browser gửi `Origin` khác allowed origin.
+- Nginx giữ `X-Forwarded-Proto` từ Cloudflare và Uvicorn chạy với `--proxy-headers`.
+- Template: `.env.production.example`.
+
+### Baseline
+
 - Không có default credentials; admin tạo từ env khi seed.
 - Password hash Argon2; JWT httpOnly cookie; `secure` bật khi `COOKIE_SECURE=true`.
 - Authorization kiểm tra backend, không chỉ frontend.
@@ -156,6 +169,7 @@ Migration đầu tiên: `alembic/versions/5e56d69bbfb0_initial_schema.py`.
 - Chưa cấu hình Cloudflare/public hostname.
 - Chưa có backup/restore automation cho app.
 - Chưa có SSO/MFA; chỉ local auth.
+- Rate limit là in-process; MVP chạy một backend process.
 - Chưa tích hợp UDAN BMS/inverter thật.
 - Chưa test cross-browser/mobile thực tế ngoài responsive CSS.
 - Chưa có audit log chi tiết từng field; lifecycle timeline + audit metadata là baseline.

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
 from app.routers import (
@@ -38,9 +38,9 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    docs_url="/api/docs",
+    docs_url="/api/docs" if settings.enable_docs else None,
     redoc_url=None,
-    openapi_url="/api/openapi.json",
+    openapi_url="/api/openapi.json" if settings.enable_docs else None,
     lifespan=lifespan,
 )
 
@@ -51,6 +51,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+@app.middleware("http")
+async def csrf_origin_guard(request: Request, call_next):
+    origin = request.headers.get("origin")
+    if request.method in UNSAFE_METHODS and origin:
+        allowed = set(settings.cors_origin_list)
+        if origin not in allowed:
+            return JSONResponse(status_code=403, content={"detail": "Origin không được phép"})
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -86,4 +99,4 @@ app.include_router(integrations.router, prefix="/api/v1")
 
 @app.get("/", include_in_schema=False)
 def root() -> RedirectResponse:
-    return RedirectResponse(url="/api/docs")
+    return RedirectResponse(url="/api/docs" if settings.enable_docs else "/api/v1/health")

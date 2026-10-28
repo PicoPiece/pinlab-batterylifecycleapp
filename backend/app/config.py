@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     cookie_name: str = "pinlab_session"
     cookie_secure: bool = False
     cookie_samesite: str = "lax"
+    enable_docs: bool = True
     upload_dir: str = "/data/uploads"
     max_upload_mb: int = 20
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
