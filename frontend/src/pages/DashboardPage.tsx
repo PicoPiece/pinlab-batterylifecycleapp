@@ -51,7 +51,7 @@ export function DashboardPage() {
     <div className="stack-lg">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">Live database</span>
+          <span className="eyebrow">Dữ liệu trực tiếp</span>
           <h2>Tình hình pin & vòng đời</h2>
           <p className="muted">
             Số liệu lấy trực tiếp từ database. Không có KPI mô phỏng trên dashboard.
@@ -69,6 +69,34 @@ export function DashboardPage() {
         <StatCard label="Kiểm tra gần đây" value={data.recent_inspections.length} hint="5 bản ghi mới nhất" />
       </div>
 
+      <section className="card attention-card">
+        <div className="card-head">
+          <div>
+            <span className="eyebrow">Cần chú ý</span>
+            <h3>Pin cần kiểm định hoặc thiếu dữ liệu</h3>
+          </div>
+          <span className="toolbar-count">{data.needs_attention?.length ?? 0} pin</span>
+        </div>
+        {!data.needs_attention?.length ? (
+          <EmptyState title="Không có pin cần chú ý" detail="Tất cả pin đang có SOC/SOH và inspection." />
+        ) : (
+          <ul className="attention-list">
+            {data.needs_attention.map((item) => (
+              <li key={item.battery_id}>
+                <Link className="table-link" to={`/batteries/${item.battery_id}`}>
+                  {item.asset_id}
+                </Link>
+                <div className="reason-row">
+                  {item.reasons.map((reason) => (
+                    <span className="reason-chip" key={reason}>{reason}</span>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="grid-2">
         <section className="card">
           <div className="card-head">
@@ -79,12 +107,12 @@ export function DashboardPage() {
           </div>
           <div className="chart-wrap">
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={statusData} margin={{ top: 10, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7eaf0" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={60} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <BarChart data={statusData} layout="vertical" margin={{ top: 8, right: 12, left: 8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e7eaf0" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" width={115} tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#0f766e" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="#0f766e" radius={[0, 6, 6, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -102,7 +130,7 @@ export function DashboardPage() {
               <h4 className="mini-title">SOC</h4>
               <ResponsiveContainer width="100%" height={190}>
                 <PieChart>
-                  <Pie data={data.soc_distribution} dataKey="count" nameKey="bucket" innerRadius={42} outerRadius={70}>
+                  <Pie data={data.soc_distribution} dataKey="count" nameKey="bucket" innerRadius={42} outerRadius={70} isAnimationActive={false}>
                     {data.soc_distribution.map((_, index) => (
                       <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
@@ -116,7 +144,7 @@ export function DashboardPage() {
               <h4 className="mini-title">SOH</h4>
               <ResponsiveContainer width="100%" height={190}>
                 <PieChart>
-                  <Pie data={data.soh_distribution} dataKey="count" nameKey="bucket" innerRadius={42} outerRadius={70}>
+                  <Pie data={data.soh_distribution} dataKey="count" nameKey="bucket" innerRadius={42} outerRadius={70} isAnimationActive={false}>
                     {data.soh_distribution.map((_, index) => (
                       <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
@@ -173,7 +201,7 @@ export function DashboardPage() {
         <section className="card">
           <div className="card-head">
             <div>
-              <span className="eyebrow">Audit trail</span>
+              <span className="eyebrow">Lịch sử thay đổi</span>
               <h3>Hoạt động vòng đời gần đây</h3>
             </div>
           </div>

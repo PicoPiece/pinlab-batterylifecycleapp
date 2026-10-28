@@ -60,7 +60,7 @@ export function UsersPage() {
     <div className="stack-lg">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">Access control</span>
+          <span className="eyebrow">Kiểm soát truy cập</span>
           <h2>Người dùng & vai trò</h2>
           <p className="muted">Admin, Technician và Viewer. Phân quyền được kiểm tra ở backend.</p>
         </div>

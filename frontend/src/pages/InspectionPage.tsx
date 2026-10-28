@@ -96,7 +96,7 @@ export function InspectionPage() {
     <div className="stack-lg">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">Inspection record</span>
+          <span className="eyebrow">Bản ghi kiểm tra</span>
           <h2>Ghi nhận kiểm tra</h2>
           <p className="muted">
             {battery ? `${battery.asset_id} · ${battery.manufacturer ?? "Chưa rõ hãng"}` : "Đang tải pin…"}
@@ -132,7 +132,7 @@ export function InspectionPage() {
         <div className="section-block">
           <div className="section-head">
             <div>
-              <span className="eyebrow">Measured parameters</span>
+              <span className="eyebrow">Thông số đo</span>
               <h3>Thông số đo</h3>
             </div>
             <button type="button" className="btn btn-ghost" onClick={() => setParameters((rows) => [...rows, { key: "", value: "" }])}>

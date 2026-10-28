@@ -206,6 +206,12 @@ class RecentEvent(BaseModel):
     actor: str
 
 
+class AttentionBattery(BaseModel):
+    battery_id: int
+    asset_id: str
+    reasons: list[str]
+
+
 class DashboardSummary(BaseModel):
     total_batteries: int
     by_status: list[StatusCount]
@@ -213,6 +219,7 @@ class DashboardSummary(BaseModel):
     soh_available: int
     soc_distribution: list[BucketCount]
     soh_distribution: list[BucketCount]
+    needs_attention: list[AttentionBattery]
     recent_inspections: list[RecentInspection]
     recent_events: list[RecentEvent]
 

@@ -3,6 +3,8 @@ import type {
   EventType,
   InspectionResult,
   MeasurementMetric,
+  MeasurementQuality,
+  MeasurementSource,
   Role,
   SpecificationStatus,
 } from "./types";
@@ -37,6 +39,19 @@ export const metricLabels: Record<MeasurementMetric, string> = {
   voltage: "Điện áp",
   current: "Dòng điện",
   temperature: "Nhiệt độ",
+};
+
+export const sourceLabels: Record<MeasurementSource, string> = {
+  manual: "Nhập tay",
+  mock: "Mô phỏng",
+  bms_udan: "UDAN BMS",
+  inverter_modbus: "Inverter/Modbus",
+};
+
+export const qualityLabels: Record<MeasurementQuality, string> = {
+  measured: "Đã đo",
+  estimated: "Ước tính",
+  unknown: "Chưa rõ",
 };
 
 export const eventLabels: Record<EventType, string> = {

@@ -56,7 +56,7 @@ export function BatteriesPage() {
     <div className="stack-lg">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">Battery registry</span>
+          <span className="eyebrow">Danh mục pin</span>
           <h2>Pin & tài sản</h2>
           <p className="muted">Dữ liệu chưa xác định được để trống, không tự suy diễn thông số.</p>
         </div>

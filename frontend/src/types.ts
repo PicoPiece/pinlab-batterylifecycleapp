@@ -143,6 +143,12 @@ export interface RecentEvent {
   actor: string;
 }
 
+export interface AttentionBattery {
+  battery_id: number;
+  asset_id: string;
+  reasons: string[];
+}
+
 export interface DashboardSummary {
   total_batteries: number;
   by_status: StatusCount[];
@@ -150,6 +156,7 @@ export interface DashboardSummary {
   soh_available: number;
   soc_distribution: BucketCount[];
   soh_distribution: BucketCount[];
+  needs_attention: AttentionBattery[];
   recent_inspections: RecentInspection[];
   recent_events: RecentEvent[];
 }

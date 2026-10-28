@@ -8,6 +8,7 @@ from app.database import get_db
 from app.deps import get_current_user
 from app.models import Battery, BatteryStatus, Inspection, LifecycleEvent, Measurement, MeasurementMetric, User
 from app.schemas import (
+    AttentionBattery,
     BucketCount,
     DashboardSummary,
     RecentEvent,
@@ -46,7 +47,10 @@ def dashboard(
     counts = {status: count for status, count in rows}
     by_status = [StatusCount(status=status, count=counts.get(status, 0)) for status in BatteryStatus]
 
-    active_ids = list(db.scalars(select(Battery.id).where(active_filter)).all())
+    active_rows = db.execute(
+        select(Battery.id, Battery.asset_id, Battery.status).where(active_filter)
+    ).all()
+    active_ids = [row.id for row in active_rows]
     latest: dict[tuple[int, MeasurementMetric], float] = {}
     if active_ids:
         measurements = db.scalars(
@@ -64,6 +68,24 @@ def dashboard(
 
     soc_values = [value for (battery_id, metric), value in latest.items() if metric == MeasurementMetric.soc]
     soh_values = [value for (battery_id, metric), value in latest.items() if metric == MeasurementMetric.soh]
+
+    inspected_battery_ids = set(db.scalars(select(Inspection.battery_id).distinct()).all())
+    needs_attention: list[AttentionBattery] = []
+    for row in active_rows:
+        reasons: list[str] = []
+        if (row.id, MeasurementMetric.soc) not in latest:
+            reasons.append("Thiếu SOC")
+        if (row.id, MeasurementMetric.soh) not in latest:
+            reasons.append("Thiếu SOH")
+        if row.id not in inspected_battery_ids:
+            reasons.append("Chưa có inspection")
+        if row.status in (BatteryStatus.received, BatteryStatus.inspecting, BatteryStatus.quarantined):
+            reasons.append("Cần kiểm tra/kiểm định")
+        if reasons:
+            needs_attention.append(
+                AttentionBattery(battery_id=row.id, asset_id=row.asset_id, reasons=reasons)
+            )
+    needs_attention = needs_attention[:6]
 
     inspection_rows = db.execute(
         select(Inspection, Battery.asset_id, User.full_name)
@@ -113,6 +135,7 @@ def dashboard(
         soh_available=len(soh_values),
         soc_distribution=bucket_counts(soc_values),
         soh_distribution=bucket_counts(soh_values),
+        needs_attention=needs_attention,
         recent_inspections=recent_inspections,
         recent_events=recent_events,
     )

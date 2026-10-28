@@ -12,6 +12,8 @@ import {
   formatNumber,
   inspectionResultLabels,
   metricLabels,
+  qualityLabels,
+  sourceLabels,
 } from "../format";
 import type { Attachment, Battery, Inspection, LifecycleEvent, Measurement, MeasurementMetric } from "../types";
 
@@ -126,7 +128,7 @@ export function BatteryDetailPage() {
     <div className="stack-lg">
       <div className="detail-head">
         <div>
-          <span className="eyebrow">Battery asset</span>
+          <span className="eyebrow">Tài sản pin</span>
           <div className="detail-title">
             <h2>{battery.asset_id}</h2>
             <StatusBadge status={battery.status} />
@@ -151,7 +153,7 @@ export function BatteryDetailPage() {
         <section className="card">
           <div className="card-head">
             <div>
-              <span className="eyebrow">Specifications</span>
+              <span className="eyebrow">Thông số</span>
               <h3>Thông số pin</h3>
             </div>
           </div>
@@ -171,7 +173,7 @@ export function BatteryDetailPage() {
         <section className="card">
           <div className="card-head">
             <div>
-              <span className="eyebrow">Latest measurement</span>
+              <span className="eyebrow">Đo gần nhất</span>
               <h3>SOC / SOH</h3>
             </div>
             {writer ? (
@@ -188,9 +190,14 @@ export function BatteryDetailPage() {
                   <span>{metric.toUpperCase()}</span>
                   <strong>{item ? `${formatNumber(item.value, item.unit)}` : "Chưa có dữ liệu"}</strong>
                   {item ? (
-                    <small>
-                      {item.source} · {item.quality} · {formatDateTime(item.measured_at)}
-                    </small>
+                    <>
+                      <div className="provenance-row">
+                        <span className={`badge badge-source-${item.source}`}>{sourceLabels[item.source]}</span>
+                        <span className={`badge badge-quality-${item.quality}`}>{qualityLabels[item.quality]}</span>
+                        {item.source === "mock" ? <span className="badge badge-simulated">SIMULATED</span> : null}
+                      </div>
+                      <small>{formatDateTime(item.measured_at)}</small>
+                    </>
                   ) : (
                     <small>Không suy diễn từ điện áp.</small>
                   )}
@@ -257,7 +264,7 @@ export function BatteryDetailPage() {
       <section className="card">
         <div className="card-head">
           <div>
-            <span className="eyebrow">History</span>
+            <span className="eyebrow">Lịch sử đo</span>
             <h3>Lịch sử đo</h3>
           </div>
           <span className="toolbar-count">{measurements.length} bản ghi</span>
@@ -273,8 +280,13 @@ export function BatteryDetailPage() {
                   <tr key={item.id}>
                     <td>{metricLabels[item.metric]}</td>
                     <td><strong>{formatNumber(item.value, item.unit)}</strong></td>
-                    <td>{item.source}</td>
-                    <td>{item.quality}</td>
+                    <td>
+                      <span className={`badge badge-source-${item.source}`}>{sourceLabels[item.source]}</span>
+                    </td>
+                    <td>
+                      <span className={`badge badge-quality-${item.quality}`}>{qualityLabels[item.quality]}</span>
+                      {item.source === "mock" ? <span className="badge badge-simulated">SIMULATED</span> : null}
+                    </td>
                     <td>{formatDateTime(item.measured_at)}</td>
                     <td>{item.notes ?? "—"}</td>
                   </tr>
@@ -289,7 +301,7 @@ export function BatteryDetailPage() {
         <section className="card">
           <div className="card-head">
             <div>
-              <span className="eyebrow">Inspection</span>
+              <span className="eyebrow">Kiểm tra</span>
               <h3>Kiểm tra & kiểm thử</h3>
             </div>
             {writer ? <Link className="btn btn-ghost" to={`/batteries/${battery.id}/inspections/new`}>+ Thêm</Link> : null}
@@ -317,8 +329,8 @@ export function BatteryDetailPage() {
         <section className="card">
           <div className="card-head">
             <div>
-              <span className="eyebrow">Evidence</span>
-              <h3>Attachments</h3>
+              <span className="eyebrow">Bằng chứng</span>
+              <h3>Tệp đính kèm</h3>
             </div>
             {writer ? (
               <label className="btn btn-ghost upload-label">
@@ -349,8 +361,8 @@ export function BatteryDetailPage() {
       <section className="card">
         <div className="card-head">
           <div>
-            <span className="eyebrow">Audit trail</span>
-            <h3>Lifecycle timeline</h3>
+            <span className="eyebrow">Lịch sử thay đổi</span>
+            <h3>Dòng thời gian vòng đời</h3>
           </div>
         </div>
         {events.length === 0 ? (
