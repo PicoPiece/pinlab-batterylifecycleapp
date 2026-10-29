@@ -14,7 +14,7 @@ import type { Role, User } from "./types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string) => {
     const nextUser = await api.login(email, password);
     setUser(nextUser);
+    return nextUser;
   }, []);
 
   const logout = useCallback(async () => {
@@ -86,6 +87,9 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+  if (user.must_change_password && location.pathname !== "/change-password") {
+    return <Navigate to="/change-password" replace />;
   }
   return <>{children}</>;
 }

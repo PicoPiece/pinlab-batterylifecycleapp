@@ -1,4 +1,5 @@
 import type {
+  AdminPasswordResetResponse,
   Attachment,
   Battery,
   BatteryPortfolioItem,
@@ -79,6 +80,8 @@ export const api = {
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   me: () => request<User>("/auth/me"),
+  changePassword: (payload: { current_password: string; new_password: string; confirm_password: string }) =>
+    request<void>("/auth/change-password", { method: "POST", body: JSON.stringify(payload) }),
 
   dashboard: () => request<DashboardSummary>("/dashboard"),
 
@@ -151,6 +154,8 @@ export const api = {
   getUsers: () => request<User[]>("/users"),
   createUser: (payload: { email: string; full_name: string; role: Role; password: string }) =>
     request<User>("/users", { method: "POST", body: JSON.stringify(payload) }),
+  resetUserPassword: (userId: number) =>
+    request<AdminPasswordResetResponse>(`/users/${userId}/reset-password`, { method: "POST" }),
 
   getProviders: () => request<ProviderInfo[]>("/integrations/providers"),
 };

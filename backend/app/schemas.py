@@ -26,13 +26,33 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=12, max_length=128)
+    confirm_password: str = Field(min_length=12, max_length=128)
+
+    @model_validator(mode="after")
+    def validate_confirmation(self) -> "ChangePasswordRequest":
+        if self.new_password != self.confirm_password:
+            raise ValueError("Mật khẩu xác nhận không khớp")
+        if self.new_password == self.current_password:
+            raise ValueError("Mật khẩu mới phải khác mật khẩu hiện tại")
+        return self
+
+
 class UserRead(ORMModel):
     id: int
     email: EmailStr
     full_name: str
     role: UserRole
     is_active: bool
+    must_change_password: bool
     created_at: datetime
+
+
+class AdminPasswordResetResponse(BaseModel):
+    temporary_password: str
+    user: UserRead
 
 
 class UserCreate(BaseModel):

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth, useAuth } from "./auth";
 import { Layout } from "./components/Layout";
 import { BatteriesPage } from "./pages/BatteriesPage";
+import { ChangePasswordPage } from "./pages/ChangePasswordPage";
 import { BatteryDetailPage } from "./pages/BatteryDetailPage";
 import { BatteryFormPage } from "./pages/BatteryFormPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -20,6 +21,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/change-password" element={<RequireAuth><ChangePasswordPage /></RequireAuth>} />
       <Route
         element={
           <RequireAuth>

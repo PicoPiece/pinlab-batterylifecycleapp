@@ -6,6 +6,7 @@ export interface User {
   full_name: string;
   role: Role;
   is_active: boolean;
+  must_change_password: boolean;
   created_at: string;
 }
 
@@ -206,6 +207,11 @@ export interface InspectionSummary {
   technician: string;
   notes: string | null;
   evidence_count: number;
+}
+
+export interface AdminPasswordResetResponse {
+  temporary_password: string;
+  user: User;
 }
 
 export interface ProviderInfo {

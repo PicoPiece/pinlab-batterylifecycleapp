@@ -114,6 +114,10 @@ export function Layout() {
           <span className="sidebar-status">{assetCount === null ? t("nav.demoDataset") : t("nav.assets", { n: assetCount })}</span>
         </div>
         <div className="sidebar-foot">
+          <NavLink className="nav-link account-link" to="/change-password">
+            <span className="nav-dot" aria-hidden="true" />
+            {t("password.account")}
+          </NavLink>
           <div className="sidebar-user">
             <span className="avatar">{(user?.full_name ?? "?").slice(0, 1).toUpperCase()}</span>
             <div>

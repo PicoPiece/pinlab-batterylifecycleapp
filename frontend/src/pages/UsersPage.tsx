@@ -4,7 +4,7 @@ import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { ErrorState, Loading } from "../components/States";
 import { formatDateTime } from "../format";
-import type { Role, User } from "../types";
+import type { AdminPasswordResetResponse, Role, User } from "../types";
 
 export function UsersPage() {
   const { user } = useAuth();
@@ -15,6 +15,8 @@ export function UsersPage() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState({ email: "", full_name: "", role: "viewer" as Role, password: "" });
   const [saving, setSaving] = useState(false);
+  const [resetResult, setResetResult] = useState<AdminPasswordResetResponse | null>(null);
+  const [resetBusy, setResetBusy] = useState<number | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -40,6 +42,20 @@ export function UsersPage() {
       </div>
     );
   }
+
+  const resetPassword = async (target: User) => {
+    if (!window.confirm(t("password.resetConfirm", { email: target.email }))) return;
+    setResetBusy(target.id);
+    setError("");
+    try {
+      setResetResult(await api.resetUserPassword(target.id));
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.detail : "Unable to reset password");
+    } finally {
+      setResetBusy(null);
+    }
+  };
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -77,15 +93,25 @@ export function UsersPage() {
           {loading ? <Loading /> : error ? <ErrorState message={error} /> : (
             <div className="table-wrap">
               <table className="data-table">
-                <thead><tr><th>{t("users.fullName")}</th><th>Email</th><th>{t("users.role")}</th><th>{t("users.accountStatus")}</th><th>{t("users.created")}</th></tr></thead>
+                <thead><tr><th>{t("users.fullName")}</th><th>Email</th><th>{t("users.role")}</th><th>{t("users.accountStatus")}</th><th>{t("users.created")}</th><th>{t("common.actions")}</th></tr></thead>
                 <tbody>
                   {users.map((item) => (
                     <tr key={item.id}>
                       <td><strong>{item.full_name}</strong></td>
                       <td>{item.email}</td>
                       <td>{t(`role.${item.role}`)}</td>
-                      <td>{item.is_active ? t("users.active") : t("users.inactive")}</td>
+                      <td>
+                        {item.is_active ? t("users.active") : t("users.inactive")}
+                        {item.must_change_password ? <div><span className="badge badge-inspecting">{t("password.mustChange")}</span></div> : null}
+                      </td>
                       <td>{formatDateTime(item.created_at)}</td>
+                      <td>
+                        {item.id === user?.id ? <span className="muted">—</span> : (
+                          <button className="reset-button" disabled={resetBusy === item.id} onClick={() => void resetPassword(item)}>
+                            {resetBusy === item.id ? t("common.loading") : t("password.resetAction")}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -110,6 +136,24 @@ export function UsersPage() {
           </form>
         </section>
       </div>
+
+      {resetResult ? (
+        <div className="modal-backdrop" role="presentation" onClick={() => setResetResult(null)}>
+          <div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="reset-title" onClick={(event) => event.stopPropagation()}>
+            <span className="eyebrow">{t("users.create")}</span>
+            <h2 id="reset-title">{t("password.resetTitle")}</h2>
+            <p>{t("password.resetHint")}</p>
+            <p><strong>{resetResult.user.full_name}</strong> · {resetResult.user.email}</p>
+            <div className="temp-password">
+              <code>{resetResult.temporary_password}</code>
+              <button className="btn btn-ghost btn-sm" onClick={() => void navigator.clipboard?.writeText(resetResult.temporary_password)}>{t("password.copy")}</button>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-primary" onClick={() => setResetResult(null)}>{t("password.close")}</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

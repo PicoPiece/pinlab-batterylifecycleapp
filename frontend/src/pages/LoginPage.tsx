@@ -19,9 +19,9 @@ export function LoginPage() {
     setError("");
     setSubmitting(true);
     try {
-      await login(email, password);
+      const nextUser = await login(email, password);
       const from = (location.state as { from?: string } | null)?.from ?? "/";
-      navigate(from, { replace: true });
+      navigate(nextUser.must_change_password ? "/change-password" : from, { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Unable to sign in");
     } finally {
@@ -65,6 +65,9 @@ export function LoginPage() {
           <span className="eyebrow">{t("login.internal")}</span>
           <h2>{t("login.welcome")}</h2>
           <p className="muted">{t("login.panelHint")}</p>
+          {(location.state as { passwordChanged?: boolean } | null)?.passwordChanged ? (
+            <div className="form-success">{t("password.changed")}</div>
+          ) : null}
           <div className="login-demo-note"><span aria-hidden="true">i</span>{t("login.demoNotice")}</div>
 
           <form onSubmit={onSubmit} className="stack">

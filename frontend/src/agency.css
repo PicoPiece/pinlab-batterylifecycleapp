@@ -649,3 +649,31 @@ label.btn { cursor: pointer; }
 .passport-card .data-table th, .tab-panel .data-table th { font-size: .65rem; }
 .passport-card .data-table td, .tab-panel .data-table td { font-size: .72rem; }
 .passport-card .data-table td:nth-child(5), .tab-panel .data-table td:nth-child(5) { font-size: .66rem; }
+
+/* Account / password */
+.account-shell { min-height: 100vh; padding: 22px 30px 40px; background: var(--bg); }
+.account-header { display: flex; align-items: center; justify-content: space-between; max-width: 720px; margin: 0 auto 28px; }
+.account-header .brand-mark { width: 34px; height: 34px; }
+.account-card { width: min(480px, 100%); margin: 0 auto; padding: 30px 32px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: #fff; box-shadow: var(--shadow); }
+.account-card h1 { margin: 5px 0 6px; font-size: 1.7rem; }
+.account-card .muted { margin-bottom: 18px; font-size: .8rem; }
+.account-card form { margin-top: 16px; }
+.account-force { margin: 0 0 14px; padding: 10px 12px; border: 1px solid #e5d1a9; border-radius: 8px; background: #fdf8ed; color: #765315; font-size: .76rem; line-height: 1.5; }
+.account-policy { color: var(--muted); font-size: .7rem; line-height: 1.5; }
+.account-back { display: inline-block; margin-top: 18px; color: var(--primary-dark); font-size: .72rem; font-weight: 650; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(4,18,27,.5); }
+.modal-card { width: min(460px, 100%); max-height: calc(100vh - 40px); overflow: auto; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 24px 70px rgba(4,18,27,.24); }
+.modal-card h2 { margin: 3px 0 8px; font-size: 1.35rem; }
+.modal-card p { color: var(--muted); font-size: .75rem; line-height: 1.55; }
+.temp-password { display: flex; gap: 8px; align-items: center; margin: 14px 0 10px; padding: 10px; border: 1px solid #e5d1a9; border-radius: 8px; background: #fdf8ed; }
+.temp-password code { flex: 1; overflow-wrap: anywhere; color: #5e4518; font-size: .72rem; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.reset-button { border: 0; background: transparent; color: var(--primary-dark); font-size: .66rem; font-weight: 700; padding: 3px 0; }
+.reset-button:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  .account-shell { padding: 14px 14px 30px; }
+  .account-header { margin-bottom: 18px; }
+  .account-card { padding: 22px 18px; }
+  .account-card h1 { font-size: 1.45rem; }
+}
+.account-header-actions { display: flex; align-items: center; gap: 8px; }

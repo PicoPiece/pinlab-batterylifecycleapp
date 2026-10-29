@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -6,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.deps import require_admin
 from app.models import User
-from app.schemas import UserCreate, UserRead, UserUpdate
+from app.schemas import AdminPasswordResetResponse, UserCreate, UserRead, UserUpdate
 from app.security import hash_password
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -32,6 +34,7 @@ def create_user(
         hashed_password=hash_password(payload.password),
         role=payload.role,
         is_active=True,
+        must_change_password=True,
     )
     db.add(user)
     try:
@@ -41,6 +44,29 @@ def create_user(
         raise HTTPException(status_code=409, detail="Email đã tồn tại")
     db.refresh(user)
     return user
+
+
+@router.post("/{user_id}/reset-password", response_model=AdminPasswordResetResponse)
+def reset_user_password(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current: User = Depends(require_admin),
+) -> AdminPasswordResetResponse:
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    if user.id == current.id:
+        raise HTTPException(status_code=400, detail="Dùng chức năng đổi mật khẩu cho tài khoản của bạn")
+    temporary_password = secrets.token_hex(24)
+    user.hashed_password = hash_password(temporary_password)
+    user.must_change_password = True
+    user.token_version += 1
+    db.commit()
+    db.refresh(user)
+    return AdminPasswordResetResponse(
+        temporary_password=temporary_password,
+        user=UserRead.model_validate(user),
+    )
 
 
 @router.patch("/{user_id}", response_model=UserRead)
