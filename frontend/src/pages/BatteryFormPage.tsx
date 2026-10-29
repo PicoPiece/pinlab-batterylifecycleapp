@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api";
 import { canWrite, useAuth } from "../auth";
+import { useI18n } from "../i18n";
 import { Loading } from "../components/States";
-import { batteryStatusLabels, specificationLabels } from "../format";
 import type { BatteryStatus, SpecificationStatus } from "../types";
 
-const STATUS_OPTIONS = Object.keys(batteryStatusLabels) as BatteryStatus[];
-const SPEC_OPTIONS = Object.keys(specificationLabels) as SpecificationStatus[];
+const STATUS_OPTIONS: BatteryStatus[] = ["received", "inspecting", "tested", "available", "in_service", "second_life", "retired", "quarantined"];
+const SPEC_OPTIONS: SpecificationStatus[] = ["confirmed", "partial", "unknown"];
 
 type FormState = Record<string, string>;
 
@@ -31,6 +31,7 @@ export function BatteryFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const isEdit = Boolean(id);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [loading, setLoading] = useState(isEdit);
@@ -70,8 +71,8 @@ export function BatteryFormPage() {
   if (!canWrite(user?.role)) {
     return (
       <div className="state-box state-error">
-        <strong>Không có quyền chỉnh sửa</strong>
-        <span>Tài khoản Viewer chỉ được xem dữ liệu.</span>
+        <strong>{t("batteryForm.noPermission")}</strong>
+        <span>{t("batteryForm.viewer")}</span>
       </div>
     );
   }
@@ -120,14 +121,12 @@ export function BatteryFormPage() {
     <div className="stack-lg">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">{isEdit ? "Cập nhật tài sản" : "Đăng ký tài sản"}</span>
-          <h2>{isEdit ? "Sửa thông tin pin" : "Thêm pin mới"}</h2>
-          <p className="muted">
-            Trường chưa biết có thể để trống. Chọn “Chưa xác định” thay vì tự suy diễn thông số.
-          </p>
+          <span className="eyebrow">{isEdit ? t("batteryForm.kickerEdit") : t("batteryForm.kickerNew")}</span>
+          <h2>{isEdit ? t("batteryForm.titleEdit") : t("batteryForm.titleNew")}</h2>
+          <p className="muted">{t("batteryForm.subtitle")}</p>
         </div>
         <Link className="btn btn-ghost" to={id ? `/batteries/${id}` : "/batteries"}>
-          Quay lại
+          {t("batteryForm.back")}
         </Link>
       </div>
 
@@ -166,42 +165,42 @@ export function BatteryFormPage() {
             <input className="input" type="number" step="0.001" min="0" value={form.initial_energy_kwh} onChange={(e) => update("initial_energy_kwh", e.target.value)} />
           </label>
           <label className="field">
-            <span>Trạng thái</span>
+            <span>{t("batteryForm.status")}</span>
             <select className="select" value={form.status} onChange={(e) => update("status", e.target.value)}>
               {STATUS_OPTIONS.map((value) => (
-                <option key={value} value={value}>{batteryStatusLabels[value]}</option>
+                <option key={value} value={value}>{t(`status.${value}`)}</option>
               ))}
             </select>
           </label>
           <label className="field">
-            <span>Mức xác nhận thông số</span>
+            <span>{t("batteryForm.spec")}</span>
             <select className="select" value={form.specification_status} onChange={(e) => update("specification_status", e.target.value)}>
               {SPEC_OPTIONS.map((value) => (
-                <option key={value} value={value}>{specificationLabels[value]}</option>
+                <option key={value} value={value}>{t(`spec.${value}`)}</option>
               ))}
             </select>
           </label>
           <label className="field">
-            <span>Nguồn / Origin</span>
+            <span>{t("batteryForm.source")}</span>
             <input className="input" value={form.source} onChange={(e) => update("source", e.target.value)} />
           </label>
           <label className="field">
-            <span>Ngày tiếp nhận</span>
+            <span>{t("batteryForm.received")}</span>
             <input className="input" type="date" value={form.received_at} onChange={(e) => update("received_at", e.target.value)} />
           </label>
         </div>
 
         <label className="field">
-          <span>Ghi chú</span>
+          <span>{t("batteryForm.notes")}</span>
           <textarea className="textarea" rows={4} value={form.notes} onChange={(e) => update("notes", e.target.value)} />
         </label>
 
         {error ? <div className="form-error">{error}</div> : null}
 
         <div className="form-actions">
-          <Link className="btn btn-ghost" to={id ? `/batteries/${id}` : "/batteries"}>Hủy</Link>
+          <Link className="btn btn-ghost" to={id ? `/batteries/${id}` : "/batteries"}>{t("batteryForm.cancel")}</Link>
           <button className="btn btn-primary" disabled={saving}>
-            {saving ? "Đang lưu…" : "Lưu pin"}
+            {saving ? t("batteryForm.saving") : t("batteryForm.save")}
           </button>
         </div>
       </form>

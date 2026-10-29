@@ -45,8 +45,8 @@ def latest_measurements(
     _: User = Depends(get_current_user),
 ) -> dict[str, MeasurementRead | None]:
     get_battery_or_404(db, battery_id)
-    result: dict[str, MeasurementRead | None] = {"soc": None, "soh": None}
-    for metric in (MeasurementMetric.soc, MeasurementMetric.soh):
+    result: dict[str, MeasurementRead | None] = {metric.value: None for metric in MeasurementMetric}
+    for metric in MeasurementMetric:
         item = db.scalar(
             select(Measurement)
             .where(Measurement.battery_id == battery_id, Measurement.metric == metric)

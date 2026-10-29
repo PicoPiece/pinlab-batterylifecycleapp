@@ -5,8 +5,25 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.deps import get_current_user, require_admin, require_writer
-from app.models import Battery, BatteryStatus, LifecycleEventType, User
-from app.schemas import BatteryCreate, BatteryRead, BatteryUpdate, Page
+from app.models import (
+    Attachment,
+    Battery,
+    BatteryStatus,
+    Inspection,
+    LifecycleEventType,
+    Measurement,
+    MeasurementMetric,
+    User,
+)
+from app.schemas import (
+    BatteryCreate,
+    BatteryLatestMeasurements,
+    BatteryPortfolioItem,
+    BatteryRead,
+    BatteryUpdate,
+    MeasurementSnapshot,
+    Page,
+)
 from app.services.audit import record_event
 
 router = APIRouter(prefix="/batteries", tags=["batteries"])
@@ -53,6 +70,80 @@ def list_batteries(
         ).all()
     )
     return Page(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/portfolio", response_model=list[BatteryPortfolioItem])
+def list_battery_portfolio(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> list[BatteryPortfolioItem]:
+    """Read-only fleet view with latest evidence/measurement metadata."""
+    batteries = list(
+        db.scalars(
+            select(Battery)
+            .where(Battery.is_deleted.is_(False))
+            .order_by(Battery.updated_at.desc(), Battery.id.desc())
+        ).all()
+    )
+    battery_ids = [battery.id for battery in batteries]
+    if not battery_ids:
+        return []
+
+    latest: dict[tuple[int, MeasurementMetric], Measurement] = {}
+    measurements = db.scalars(
+        select(Measurement)
+        .where(Measurement.battery_id.in_(battery_ids))
+        .order_by(Measurement.measured_at.desc(), Measurement.id.desc())
+    ).all()
+    for measurement in measurements:
+        key = (measurement.battery_id, measurement.metric)
+        if key not in latest:
+            latest[key] = measurement
+
+    inspection_rows = db.execute(
+        select(
+            Inspection.battery_id,
+            func.max(Inspection.inspected_at),
+            func.count(Inspection.id),
+        )
+        .where(Inspection.battery_id.in_(battery_ids))
+        .group_by(Inspection.battery_id)
+    ).all()
+    inspections = {
+        battery_id: {"last_inspection_at": last_at, "inspection_count": count}
+        for battery_id, last_at, count in inspection_rows
+    }
+
+    evidence_rows = db.execute(
+        select(Attachment.battery_id, func.count(Attachment.id))
+        .where(Attachment.battery_id.in_(battery_ids))
+        .group_by(Attachment.battery_id)
+    ).all()
+    evidence = {battery_id: count for battery_id, count in evidence_rows}
+
+    result: list[BatteryPortfolioItem] = []
+    for battery in batteries:
+        snapshots: dict[str, MeasurementSnapshot] = {}
+        for metric in MeasurementMetric:
+            measurement = latest.get((battery.id, metric))
+            if measurement:
+                snapshots[metric.value] = MeasurementSnapshot.model_validate(measurement)
+        latest_at = max(
+            (snapshot.measured_at for snapshot in snapshots.values()),
+            default=None,
+        )
+        inspection = inspections.get(battery.id, {})
+        result.append(
+            BatteryPortfolioItem(
+                **BatteryRead.model_validate(battery).model_dump(),
+                latest=BatteryLatestMeasurements(**snapshots),
+                latest_measurement_at=latest_at,
+                last_inspection_at=inspection.get("last_inspection_at"),
+                inspection_count=int(inspection.get("inspection_count", 0)),
+                evidence_count=int(evidence.get(battery.id, 0)),
+            )
+        )
+    return result
 
 
 @router.post("", response_model=BatteryRead, status_code=status.HTTP_201_CREATED)

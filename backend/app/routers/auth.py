@@ -12,8 +12,8 @@ from app.rate_limit import (
     login_key,
     record_login_failure,
 )
-from app.schemas import LoginRequest, UserRead
-from app.security import create_access_token, verify_password
+from app.schemas import ChangePasswordRequest, LoginRequest, UserRead
+from app.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -53,6 +53,45 @@ def login(
     )
     response.headers["Cache-Control"] = "no-store"
     return user
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    payload: ChangePasswordRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> None:
+    host = request.client.host if request.client else "unknown"
+    key = login_key(host, f"change:{user.id}")
+    blocked, retry_after = is_login_blocked(key)
+    if blocked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Quá nhiều lần thử. Vui lòng thử lại sau.",
+            headers={"Retry-After": str(retry_after)},
+        )
+    if not verify_password(payload.current_password, user.hashed_password):
+        record_login_failure(key)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mật khẩu hiện tại không đúng")
+    if verify_password(payload.new_password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mật khẩu mới phải khác mật khẩu hiện tại")
+
+    clear_login_failures(key)
+    user.hashed_password = hash_password(payload.new_password)
+    user.must_change_password = False
+    user.token_version += 1
+    db.commit()
+    response.delete_cookie(
+        settings.cookie_name,
+        path="/",
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
+        httponly=True,
+    )
+    response.headers["Cache-Control"] = "no-store"
+    response.status_code = status.HTTP_204_NO_CONTENT
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

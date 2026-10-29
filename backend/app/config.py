@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +29,20 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @model_validator(mode="after")
+    def validate_production_hardening(self) -> "Settings":
+        if self.environment.lower() not in {"production", "prod"}:
+            return self
+        if not self.cookie_secure:
+            raise ValueError("COOKIE_SECURE must be true when ENVIRONMENT=production")
+        if self.enable_docs:
+            raise ValueError("ENABLE_DOCS must be false when ENVIRONMENT=production")
+        if not self.cors_origin_list:
+            raise ValueError("CORS_ORIGINS must contain the public HTTPS origin")
+        if any(not origin.lower().startswith("https://") for origin in self.cors_origin_list):
+            raise ValueError("CORS_ORIGINS must use HTTPS in production")
+        return self
 
 
 @lru_cache

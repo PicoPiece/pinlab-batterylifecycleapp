@@ -8,6 +8,12 @@ from app.database import get_db
 from app.models import User, UserRole
 from app.security import decode_access_token
 
+PASSWORD_CHANGE_PATHS = {
+    "/api/v1/auth/me",
+    "/api/v1/auth/logout",
+    "/api/v1/auth/change-password",
+}
+
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     token = request.cookies.get(settings.cookie_name)
@@ -27,6 +33,13 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     user = db.get(User, user_id)
     if not user or not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Tài khoản không hoạt động")
+    if int(payload.get("ver", -1)) != user.token_version:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Phiên đăng nhập đã hết hiệu lực")
+    if user.must_change_password and request.url.path not in PASSWORD_CHANGE_PATHS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cần đổi mật khẩu trước khi tiếp tục",
+        )
     return user
 
 

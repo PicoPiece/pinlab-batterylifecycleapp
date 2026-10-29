@@ -1,8 +1,11 @@
 import type {
+  AdminPasswordResetResponse,
   Attachment,
   Battery,
+  BatteryPortfolioItem,
   DashboardSummary,
   Inspection,
+  InspectionSummary,
   LifecycleEvent,
   Measurement,
   Page,
@@ -77,6 +80,8 @@ export const api = {
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   me: () => request<User>("/auth/me"),
+  changePassword: (payload: { current_password: string; new_password: string; confirm_password: string }) =>
+    request<void>("/auth/change-password", { method: "POST", body: JSON.stringify(payload) }),
 
   dashboard: () => request<DashboardSummary>("/dashboard"),
 
@@ -89,6 +94,7 @@ export const api = {
     return request<Page<Battery>>(`/batteries?${query.toString()}`);
   },
   getBattery: (id: number) => request<Battery>(`/batteries/${id}`),
+  portfolio: () => request<BatteryPortfolioItem[]>("/batteries/portfolio"),
   createBattery: (payload: Record<string, unknown>) =>
     request<Battery>("/batteries", { method: "POST", body: JSON.stringify(payload) }),
   updateBattery: (id: number, payload: Record<string, unknown>) =>
@@ -107,6 +113,11 @@ export const api = {
 
   getInspections: (batteryId: number, pageSize = 100) =>
     request<Page<Inspection>>(`/batteries/${batteryId}/inspections?page_size=${pageSize}`),
+  listInspections: (page = 1, pageSize = 50) =>
+    request<Page<InspectionSummary>>(`/inspections?page=${page}&page_size=${pageSize}`),
+  getInspection: (id: number) => request<Inspection>(`/inspections/${id}`),
+  getInspectionAttachments: (id: number) =>
+    request<Attachment[]>(`/inspections/${id}/attachments`),
   createInspection: (batteryId: number, payload: Record<string, unknown>) =>
     request<Inspection>(`/batteries/${batteryId}/inspections`, {
       method: "POST",
@@ -143,6 +154,8 @@ export const api = {
   getUsers: () => request<User[]>("/users"),
   createUser: (payload: { email: string; full_name: string; role: Role; password: string }) =>
     request<User>("/users", { method: "POST", body: JSON.stringify(payload) }),
+  resetUserPassword: (userId: number) =>
+    request<AdminPasswordResetResponse>(`/users/${userId}/reset-password`, { method: "POST" }),
 
   getProviders: () => request<ProviderInfo[]>("/integrations/providers"),
 };

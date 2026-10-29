@@ -26,13 +26,33 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=12, max_length=128)
+    confirm_password: str = Field(min_length=12, max_length=128)
+
+    @model_validator(mode="after")
+    def validate_confirmation(self) -> "ChangePasswordRequest":
+        if self.new_password != self.confirm_password:
+            raise ValueError("Mật khẩu xác nhận không khớp")
+        if self.new_password == self.current_password:
+            raise ValueError("Mật khẩu mới phải khác mật khẩu hiện tại")
+        return self
+
+
 class UserRead(ORMModel):
     id: int
     email: EmailStr
     full_name: str
     role: UserRole
     is_active: bool
+    must_change_password: bool
     created_at: datetime
+
+
+class AdminPasswordResetResponse(BaseModel):
+    temporary_password: str
+    user: UserRead
 
 
 class UserCreate(BaseModel):
@@ -91,6 +111,31 @@ class BatteryRead(BatteryBase, ORMModel):
     updated_at: datetime
     created_by_id: int
     updated_by_id: int
+
+
+class MeasurementSnapshot(ORMModel):
+    metric: MeasurementMetric
+    value: float
+    unit: str
+    source: MeasurementSource
+    quality: MeasurementQuality
+    measured_at: datetime
+
+
+class BatteryLatestMeasurements(BaseModel):
+    soc: MeasurementSnapshot | None = None
+    soh: MeasurementSnapshot | None = None
+    voltage: MeasurementSnapshot | None = None
+    current: MeasurementSnapshot | None = None
+    temperature: MeasurementSnapshot | None = None
+
+
+class BatteryPortfolioItem(BatteryRead):
+    latest: BatteryLatestMeasurements = Field(default_factory=BatteryLatestMeasurements)
+    latest_measurement_at: datetime | None = None
+    last_inspection_at: datetime | None = None
+    inspection_count: int = 0
+    evidence_count: int = 0
 
 
 class MeasurementCreate(BaseModel):
@@ -210,6 +255,27 @@ class AttentionBattery(BaseModel):
     battery_id: int
     asset_id: str
     reasons: list[str]
+    severity: str = "review"
+
+
+class FleetHealth(BaseModel):
+    score: float
+    weighted_soh: float | None
+    data_coverage: float
+    inspection_currency: float
+    formula: str
+
+
+class InspectionSummary(BaseModel):
+    id: int
+    battery_id: int
+    asset_id: str
+    test_type: str
+    result: InspectionResult
+    inspected_at: datetime
+    technician: str
+    notes: str | None = None
+    evidence_count: int = 0
 
 
 class DashboardSummary(BaseModel):
@@ -222,6 +288,7 @@ class DashboardSummary(BaseModel):
     needs_attention: list[AttentionBattery]
     recent_inspections: list[RecentInspection]
     recent_events: list[RecentEvent]
+    fleet_health: FleetHealth
 
 
 class ProviderInfo(BaseModel):

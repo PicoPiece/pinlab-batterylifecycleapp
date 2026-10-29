@@ -96,6 +96,8 @@ class User(Base):
         SAEnum(UserRole, native_enum=False, length=32), default=UserRole.viewer, nullable=False
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    token_version: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
     batteries_created: Mapped[list["Battery"]] = relationship(

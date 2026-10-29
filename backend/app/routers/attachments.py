@@ -60,6 +60,22 @@ async def upload_battery_attachment(
     return attachment
 
 
+@router.get("/inspections/{inspection_id}/attachments", response_model=list[AttachmentRead])
+def list_inspection_attachments(
+    inspection_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+) -> list[Attachment]:
+    get_inspection_or_404(db, inspection_id)
+    return list(
+        db.scalars(
+            select(Attachment)
+            .where(Attachment.inspection_id == inspection_id)
+            .order_by(Attachment.created_at.desc(), Attachment.id.desc())
+        ).all()
+    )
+
+
 @router.post(
     "/inspections/{inspection_id}/attachments",
     response_model=AttachmentRead,
@@ -98,6 +114,11 @@ def download_attachment(
         path,
         media_type=attachment.content_type,
         filename=attachment.filename,
+        content_disposition_type="attachment",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 

@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ApiError } from "../api";
 import { useAuth } from "../auth";
+import { useI18n, type Lang } from "../i18n";
 
 export function LoginPage() {
   const { login } = useAuth();
+  const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -17,15 +19,17 @@ export function LoginPage() {
     setError("");
     setSubmitting(true);
     try {
-      await login(email, password);
+      const nextUser = await login(email, password);
       const from = (location.state as { from?: string } | null)?.from ?? "/";
-      navigate(from, { replace: true });
+      navigate(nextUser.must_change_password ? "/change-password" : from, { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Không thể đăng nhập");
+      setError(err instanceof ApiError ? err.detail : "Unable to sign in");
     } finally {
       setSubmitting(false);
     }
   };
+
+  const changeLang = (next: Lang) => setLang(next);
 
   return (
     <div className="auth-shell">
@@ -33,32 +37,42 @@ export function LoginPage() {
         <div className="brand brand-large">
           <span className="brand-mark">P</span>
           <div>
-            <strong>PinLab</strong>
-            <small>Battery Lifecycle</small>
+            <strong>{t("app.name")}</strong>
+            <small>{t("app.tagline")}</small>
           </div>
         </div>
-        <h1>Quản lý vòng đời pin, rõ ràng và có bằng chứng.</h1>
-        <p>
-          Đăng ký tài sản pin, ghi nhận kiểm tra, theo dõi SOC/SOH và lịch sử vòng đời
-          trong một hệ thống nội bộ duy nhất.
-        </p>
-        <div className="auth-points">
-          <span>Battery registry</span>
-          <span>Inspection & evidence</span>
-          <span>Lifecycle timeline</span>
+        <div className="auth-copy">
+          <span className="login-kicker">{t("login.kicker")}</span>
+          <h1>{t("login.title")}</h1>
+          <p>{t("login.subtitle")}</p>
+          <div className="auth-points">
+            <span>{t("login.pointAsset")}</span>
+            <span>{t("login.pointEvidence")}</span>
+            <span>{t("login.pointWarranty")}</span>
+          </div>
         </div>
-        <div className="auth-note">DEMO data is explicitly labelled SIMULATED. No hardware control.</div>
+        <div className="auth-note">{t("login.footNote")}</div>
       </section>
 
       <section className="auth-panel">
         <div className="auth-card">
-          <span className="eyebrow">Đăng nhập nội bộ</span>
-          <h2>Chào mừng trở lại</h2>
-          <p className="muted">Tài khoản do quản trị viên PinLab cấp.</p>
+          <div className="auth-lang">
+            <div className="lang-switch" role="group" aria-label={t("common.language")}>
+              <button className={lang === "vi" ? "active" : ""} onClick={() => changeLang("vi")} aria-pressed={lang === "vi"}>VI</button>
+              <button className={lang === "en" ? "active" : ""} onClick={() => changeLang("en")} aria-pressed={lang === "en"}>EN</button>
+            </div>
+          </div>
+          <span className="eyebrow">{t("login.internal")}</span>
+          <h2>{t("login.welcome")}</h2>
+          <p className="muted">{t("login.panelHint")}</p>
+          {(location.state as { passwordChanged?: boolean } | null)?.passwordChanged ? (
+            <div className="form-success">{t("password.changed")}</div>
+          ) : null}
+          <div className="login-demo-note"><span aria-hidden="true">i</span>{t("login.demoNotice")}</div>
 
           <form onSubmit={onSubmit} className="stack">
             <label className="field">
-              <span>Email</span>
+              <span>{t("login.email")}</span>
               <input
                 className="input"
                 type="email"
@@ -69,7 +83,7 @@ export function LoginPage() {
               />
             </label>
             <label className="field">
-              <span>Mật khẩu</span>
+              <span>{t("login.password")}</span>
               <input
                 className="input"
                 type="password"
@@ -81,13 +95,11 @@ export function LoginPage() {
             </label>
             {error ? <div className="form-error">{error}</div> : null}
             <button className="btn btn-primary btn-full" disabled={submitting}>
-              {submitting ? "Đang đăng nhập…" : "Đăng nhập"}
+              {submitting ? t("login.submitting") : t("login.submit")}
             </button>
           </form>
 
-          <p className="auth-foot">
-            Không có tài khoản mặc định. Liên hệ CTO/quản trị viên để được cấp quyền.
-          </p>
+          <p className="auth-foot">{t("login.footer")}</p>
         </div>
       </section>
     </div>
