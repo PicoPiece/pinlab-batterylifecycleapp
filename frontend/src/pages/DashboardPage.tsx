@@ -260,7 +260,7 @@ export function DashboardPage() {
 
       <div className="demo-disclosure">
         <span aria-hidden="true">i</span>
-        {t("dashboard.demoDisclosure")}
+        {t("dashboard.demoDisclosure", { n: data.total_batteries })}
       </div>
     </div>
   );

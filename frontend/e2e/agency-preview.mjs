@@ -54,6 +54,9 @@ try {
   await page.waitForURL(`${BASE}/`);
   await page.waitForTimeout(500);
   pass("Login", "QA admin session");
+  assert.match(await page.locator(".sidebar-status").innerText(), /12 tài sản/);
+  assert.match(await page.locator(".demo-disclosure").innerText(), /12 tài sản/);
+  pass("Dynamic asset count", "sidebar/dashboard count from DB");
 
   const kpiLinks = await page.locator(".kpi-card").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("href")));
   assert.deepEqual(kpiLinks, ["/batteries", "#fleet-health", "/inspections", "/monitoring"]);

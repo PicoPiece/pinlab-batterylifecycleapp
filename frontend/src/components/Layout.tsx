@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { api } from "../api";
 import { useAuth } from "../auth";
 import { useI18n, type Lang } from "../i18n";
 
@@ -27,6 +28,21 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [assetCount, setAssetCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setAssetCount(null);
+      return;
+    }
+    let active = true;
+    api.dashboard()
+      .then((data) => active && setAssetCount(data.total_batteries))
+      .catch(() => active && setAssetCount(null));
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const isBatteryDetail = /^\/batteries\/\d+/.test(location.pathname);
   const pageKey = location.pathname === "/"
@@ -95,7 +111,7 @@ export function Layout() {
           <span className="eyebrow">{t("nav.dataMode")}</span>
           <strong>{t("nav.demoDataset")}</strong>
           <p>{t("nav.demoNote")}</p>
-          <span className="sidebar-status">{t("nav.assets")}</span>
+          <span className="sidebar-status">{assetCount === null ? t("nav.demoDataset") : t("nav.assets", { n: assetCount })}</span>
         </div>
         <div className="sidebar-foot">
           <div className="sidebar-user">

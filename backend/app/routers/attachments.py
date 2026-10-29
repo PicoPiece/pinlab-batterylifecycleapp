@@ -114,6 +114,11 @@ def download_attachment(
         path,
         media_type=attachment.content_type,
         filename=attachment.filename,
+        content_disposition_type="attachment",
+        headers={
+            "Cache-Control": "no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 
