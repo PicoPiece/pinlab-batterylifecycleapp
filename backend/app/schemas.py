@@ -93,6 +93,31 @@ class BatteryRead(BatteryBase, ORMModel):
     updated_by_id: int
 
 
+class MeasurementSnapshot(ORMModel):
+    metric: MeasurementMetric
+    value: float
+    unit: str
+    source: MeasurementSource
+    quality: MeasurementQuality
+    measured_at: datetime
+
+
+class BatteryLatestMeasurements(BaseModel):
+    soc: MeasurementSnapshot | None = None
+    soh: MeasurementSnapshot | None = None
+    voltage: MeasurementSnapshot | None = None
+    current: MeasurementSnapshot | None = None
+    temperature: MeasurementSnapshot | None = None
+
+
+class BatteryPortfolioItem(BatteryRead):
+    latest: BatteryLatestMeasurements = Field(default_factory=BatteryLatestMeasurements)
+    latest_measurement_at: datetime | None = None
+    last_inspection_at: datetime | None = None
+    inspection_count: int = 0
+    evidence_count: int = 0
+
+
 class MeasurementCreate(BaseModel):
     metric: MeasurementMetric
     value: float
@@ -210,6 +235,27 @@ class AttentionBattery(BaseModel):
     battery_id: int
     asset_id: str
     reasons: list[str]
+    severity: str = "review"
+
+
+class FleetHealth(BaseModel):
+    score: float
+    weighted_soh: float | None
+    data_coverage: float
+    inspection_currency: float
+    formula: str
+
+
+class InspectionSummary(BaseModel):
+    id: int
+    battery_id: int
+    asset_id: str
+    test_type: str
+    result: InspectionResult
+    inspected_at: datetime
+    technician: str
+    notes: str | None = None
+    evidence_count: int = 0
 
 
 class DashboardSummary(BaseModel):
@@ -222,6 +268,7 @@ class DashboardSummary(BaseModel):
     needs_attention: list[AttentionBattery]
     recent_inspections: list[RecentInspection]
     recent_events: list[RecentEvent]
+    fleet_health: FleetHealth
 
 
 class ProviderInfo(BaseModel):

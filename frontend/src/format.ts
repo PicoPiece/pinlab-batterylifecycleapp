@@ -72,18 +72,28 @@ export const roleLabels: Record<Role, string> = {
   viewer: "Chỉ xem",
 };
 
+let formatLocale = "vi-VN";
+
+export function setFormatLocale(locale: string): void {
+  formatLocale = locale;
+}
+
+export function getFormatLocale(): string {
+  return formatLocale;
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(date);
+  return new Intl.DateTimeFormat(formatLocale, { dateStyle: "medium" }).format(date);
 }
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat(formatLocale, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
@@ -91,7 +101,7 @@ export function formatDateTime(value: string | null | undefined): string {
 
 export function formatNumber(value: number | null | undefined, suffix = ""): string {
   if (value === null || value === undefined) return "—";
-  return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value)}${suffix}`;
+  return `${new Intl.NumberFormat(formatLocale, { maximumFractionDigits: 2 }).format(value)}${suffix}`;
 }
 
 export function formatBytes(bytes: number): string {

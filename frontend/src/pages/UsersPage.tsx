@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { ApiError, api } from "../api";
 import { useAuth } from "../auth";
+import { useI18n } from "../i18n";
 import { ErrorState, Loading } from "../components/States";
-import { formatDateTime, roleLabels } from "../format";
+import { formatDateTime } from "../format";
 import type { Role, User } from "../types";
 
 export function UsersPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,7 +21,7 @@ export function UsersPage() {
     try {
       setUsers(await api.getUsers());
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Không thể tải người dùng");
+      setError(err instanceof ApiError ? err.detail : "Unable to load users");
     } finally {
       setLoading(false);
     }
@@ -33,8 +35,8 @@ export function UsersPage() {
   if (user?.role !== "admin") {
     return (
       <div className="state-box state-error">
-        <strong>Không có quyền truy cập</strong>
-        <span>Chỉ quản trị viên được quản lý người dùng.</span>
+        <strong>{t("users.noPermission")}</strong>
+        <span>{t("access.noPermission")}</span>
       </div>
     );
   }
@@ -46,11 +48,11 @@ export function UsersPage() {
     setMessage("");
     try {
       const created = await api.createUser(form);
-      setMessage(`Đã tạo ${created.email}`);
+      setMessage(`✓ ${created.email}`);
       setForm({ email: "", full_name: "", role: "viewer", password: "" });
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.detail : "Không thể tạo người dùng");
+      setError(err instanceof ApiError ? err.detail : "Unable to create user");
     } finally {
       setSaving(false);
     }
@@ -60,32 +62,29 @@ export function UsersPage() {
     <div className="stack-lg">
       <div className="page-intro">
         <div>
-          <span className="eyebrow">Kiểm soát truy cập</span>
-          <h2>Người dùng & vai trò</h2>
-          <p className="muted">Admin, Technician và Viewer. Phân quyền được kiểm tra ở backend.</p>
+          <span className="eyebrow">{t("users.kicker")}</span>
+          <h2>{t("users.title")}</h2>
+          <p className="muted">{t("users.subtitle")}</p>
         </div>
       </div>
 
       <div className="grid-2">
         <section className="card">
           <div className="card-head">
-            <div>
-              <span className="eyebrow">Danh sách</span>
-              <h3>Tài khoản</h3>
-            </div>
+            <div><span className="eyebrow">{t("users.list")}</span><h3>{t("users.accounts")}</h3></div>
             <span className="toolbar-count">{users.length}</span>
           </div>
           {loading ? <Loading /> : error ? <ErrorState message={error} /> : (
             <div className="table-wrap">
               <table className="data-table">
-                <thead><tr><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Tạo</th></tr></thead>
+                <thead><tr><th>{t("users.fullName")}</th><th>Email</th><th>{t("users.role")}</th><th>{t("users.accountStatus")}</th><th>{t("users.created")}</th></tr></thead>
                 <tbody>
                   {users.map((item) => (
                     <tr key={item.id}>
                       <td><strong>{item.full_name}</strong></td>
                       <td>{item.email}</td>
-                      <td>{roleLabels[item.role]}</td>
-                      <td>{item.is_active ? "Hoạt động" : "Đã khóa"}</td>
+                      <td>{t(`role.${item.role}`)}</td>
+                      <td>{item.is_active ? t("users.active") : t("users.inactive")}</td>
                       <td>{formatDateTime(item.created_at)}</td>
                     </tr>
                   ))}
@@ -96,33 +95,18 @@ export function UsersPage() {
         </section>
 
         <section className="card">
-          <div className="card-head">
-            <div>
-              <span className="eyebrow">Tạo mới</span>
-              <h3>Thêm người dùng</h3>
-            </div>
-          </div>
+          <div className="card-head"><div><span className="eyebrow">{t("users.create")}</span><h3>{t("users.add")}</h3></div></div>
           <form className="stack" onSubmit={onSubmit}>
-            <label className="field">
-              <span>Email *</span>
-              <input className="input" type="email" value={form.email} onChange={(event) => setForm((value) => ({ ...value, email: event.target.value }))} required />
-            </label>
-            <label className="field">
-              <span>Họ tên *</span>
-              <input className="input" value={form.full_name} onChange={(event) => setForm((value) => ({ ...value, full_name: event.target.value }))} required />
-            </label>
-            <label className="field">
-              <span>Vai trò *</span>
+            <label className="field"><span>Email *</span><input className="input" type="email" value={form.email} onChange={(event) => setForm((value) => ({ ...value, email: event.target.value }))} required /></label>
+            <label className="field"><span>{t("users.fullName")} *</span><input className="input" value={form.full_name} onChange={(event) => setForm((value) => ({ ...value, full_name: event.target.value }))} required /></label>
+            <label className="field"><span>{t("users.role")} *</span>
               <select className="select" value={form.role} onChange={(event) => setForm((value) => ({ ...value, role: event.target.value as Role }))}>
-                {Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                {(["admin", "technician", "viewer"] as Role[]).map((role) => <option key={role} value={role}>{t(`role.${role}`)}</option>)}
               </select>
             </label>
-            <label className="field">
-              <span>Mật khẩu tạm *</span>
-              <input className="input" type="password" minLength={8} value={form.password} onChange={(event) => setForm((value) => ({ ...value, password: event.target.value }))} required />
-            </label>
+            <label className="field"><span>{t("users.tempPassword")} *</span><input className="input" type="password" minLength={8} value={form.password} onChange={(event) => setForm((value) => ({ ...value, password: event.target.value }))} required /></label>
             {message ? <div className="form-success">{message}</div> : null}
-            <button className="btn btn-primary" disabled={saving}>{saving ? "Đang tạo…" : "Tạo người dùng"}</button>
+            <button className="btn btn-primary" disabled={saving}>{saving ? t("users.creating") : t("users.createButton")}</button>
           </form>
         </section>
       </div>

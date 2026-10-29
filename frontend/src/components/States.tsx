@@ -1,8 +1,11 @@
-export function Loading({ label = "Đang tải dữ liệu…" }: { label?: string }) {
+import { useI18n } from "../i18n";
+
+export function Loading({ label }: { label?: string }) {
+  const { t } = useI18n();
   return (
-    <div className="state-box">
+    <div className="state-box" role="status" aria-live="polite">
       <div className="spinner" />
-      <span>{label}</span>
+      <span>{label ?? t("common.loading")}</span>
     </div>
   );
 }
@@ -17,9 +20,10 @@ export function EmptyState({ title, detail }: { title: string; detail?: string }
 }
 
 export function ErrorState({ message }: { message: string }) {
+  const { t } = useI18n();
   return (
     <div className="state-box state-error" role="alert">
-      <strong>Không thể tải dữ liệu</strong>
+      <strong>{t("common.error")}</strong>
       <span>{message}</span>
     </div>
   );

@@ -147,6 +147,15 @@ export interface AttentionBattery {
   battery_id: number;
   asset_id: string;
   reasons: string[];
+  severity: "high" | "review" | "data";
+}
+
+export interface FleetHealth {
+  score: number;
+  weighted_soh: number | null;
+  data_coverage: number;
+  inspection_currency: number;
+  formula: string;
 }
 
 export interface DashboardSummary {
@@ -159,6 +168,44 @@ export interface DashboardSummary {
   needs_attention: AttentionBattery[];
   recent_inspections: RecentInspection[];
   recent_events: RecentEvent[];
+  fleet_health: FleetHealth;
+}
+
+export interface MeasurementSnapshot {
+  metric: MeasurementMetric;
+  value: number;
+  unit: string;
+  source: MeasurementSource;
+  quality: MeasurementQuality;
+  measured_at: string;
+}
+
+export interface BatteryLatestMeasurements {
+  soc: MeasurementSnapshot | null;
+  soh: MeasurementSnapshot | null;
+  voltage: MeasurementSnapshot | null;
+  current: MeasurementSnapshot | null;
+  temperature: MeasurementSnapshot | null;
+}
+
+export interface BatteryPortfolioItem extends Battery {
+  latest: BatteryLatestMeasurements;
+  latest_measurement_at: string | null;
+  last_inspection_at: string | null;
+  inspection_count: number;
+  evidence_count: number;
+}
+
+export interface InspectionSummary {
+  id: number;
+  battery_id: number;
+  asset_id: string;
+  test_type: string;
+  result: InspectionResult;
+  inspected_at: string;
+  technician: string;
+  notes: string | null;
+  evidence_count: number;
 }
 
 export interface ProviderInfo {
