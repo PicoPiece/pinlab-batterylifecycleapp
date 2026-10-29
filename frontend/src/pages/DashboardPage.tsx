@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import { useAuth } from "../auth";
+import { canWrite, useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { StatusBadge } from "../components/StatusBadge";
@@ -17,6 +17,7 @@ export function DashboardPage() {
   const { t } = useI18n();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [portfolio, setPortfolio] = useState<BatteryPortfolioItem[]>([]);
+  const [mobileSearch, setMobileSearch] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +39,16 @@ export function DashboardPage() {
 
   const highCount = data?.needs_attention.filter((item) => item.severity === "high").length ?? 0;
   const reviewCount = data?.needs_attention.filter((item) => item.severity === "review").length ?? 0;
+
+  const mobileMatches = useMemo(() => {
+    const query = mobileSearch.trim().toLowerCase();
+    if (!query) return [];
+    return portfolio.filter((asset) =>
+      [asset.asset_id, asset.serial_number, asset.model, asset.manufacturer]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query)),
+    ).slice(0, 6);
+  }, [mobileSearch, portfolio]);
 
   const provenance = useMemo(() => {
     const counts = { manual: 0, mock: 0, telemetry: 0, none: 0 };
@@ -62,6 +73,87 @@ export function DashboardPage() {
 
   return (
     <div className="stack-lg dashboard-page">
+      <section className="mobile-home" aria-label={t("mobile.home")}>
+        <div className="mobile-home-head">
+          <div>
+            <span className="eyebrow">{t("mobile.home")}</span>
+            <h2>{t("mobile.greeting", { name: user?.full_name ?? "PinLab" })}</h2>
+          </div>
+          {canWrite(user?.role) ? (
+            <Link className="btn btn-primary" to="/batteries">{t("mobile.createInspection")}</Link>
+          ) : null}
+        </div>
+
+        <label className="mobile-search">
+          <span className="mobile-search-icon" aria-hidden="true">⌕</span>
+          <span className="sr-only">{t("common.search")}</span>
+          <input
+            className="input"
+            type="search"
+            value={mobileSearch}
+            onChange={(event) => setMobileSearch(event.target.value)}
+            placeholder={t("mobile.searchPlaceholder")}
+            autoComplete="off"
+          />
+        </label>
+
+        {mobileSearch.trim() ? (
+          <div className="mobile-section">
+            <div className="mobile-section-head">
+              <h3>{t("mobile.searchResults")}</h3>
+              <span className="small muted">{mobileMatches.length}</span>
+            </div>
+            {mobileMatches.length === 0 ? (
+              <div className="note-box">
+                <strong>{t("mobile.noSearchResults")}</strong>
+                <div>{t("mobile.noSearchHint")}</div>
+              </div>
+            ) : (
+              <div className="mobile-search-results">
+                {mobileMatches.map((asset) => (
+                  <Link className="mobile-result" key={asset.id} to={`/batteries/${asset.id}`}>
+                    <div className="mobile-result-main">
+                      <strong>{asset.asset_id}</strong>
+                      <span>{asset.model ?? asset.serial_number ?? "—"}</span>
+                    </div>
+                    <div className="mobile-result-side">
+                      <strong>{asset.latest.soc ? formatNumber(asset.latest.soc.value, "%") : t("common.noData")}</strong>
+                      <small>SOC · {asset.latest.soh ? formatNumber(asset.latest.soh.value, "%") : t("common.noData")} SOH</small>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mobile-section">
+            <div className="mobile-section-head">
+              <h3>{t("mobile.attention")}</h3>
+              <Link className="text-link" to="/inspections">{t("mobile.viewQueue")} →</Link>
+            </div>
+            <div className="mobile-attention-list">
+              {attention.slice(0, 3).map((item) => (
+                <Link className="mobile-attention-item" key={item.battery_id} to={`/batteries/${item.battery_id}`}>
+                  <div className="mobile-attention-main">
+                    <strong>{item.asset_id}</strong>
+                    <span>{item.reasons.map((reason) => t(`attention.${reason}`)).join(" · ")}</span>
+                  </div>
+                  <span className={`badge badge-${item.severity === "high" ? "quarantined" : item.severity === "review" ? "inspecting" : "tested"}`}>
+                    {item.severity === "high" ? t("common.high") : item.severity === "review" ? t("common.review") : t("common.data")}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mobile-quick-actions">
+          <Link className="btn btn-primary" to="/batteries">{t("mobile.assets")}</Link>
+          <Link className="btn btn-ghost" to="/inspections">{t("mobile.inspections")}</Link>
+        </div>
+        <p className="mobile-demo-note">{t("mobile.demoNote")}</p>
+      </section>
+
       <div className="page-intro">
         <div>
           <span className="eyebrow">{t("dashboard.kicker")}</span>

@@ -13,6 +13,13 @@ const navItems = [
   { to: "/users", key: "nav.access", adminOnly: true },
 ];
 
+const mobileNavItems = [
+  { to: "/", key: "mobile.home", icon: "⌂", end: true },
+  { to: "/batteries", key: "mobile.assets", icon: "▣" },
+  { to: "/inspections", key: "mobile.inspections", icon: "✓" },
+  { to: "/change-password", key: "mobile.account", icon: "◉" },
+];
+
 const pageKeys: Record<string, string> = {
   "/": "nav.overview",
   "/batteries": "passport.title",
@@ -162,6 +169,20 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <nav className="mobile-bottom-nav" aria-label={t("mobile.home")}>
+        {mobileNavItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) => (isActive ? "mobile-nav-item active" : "mobile-nav-item")}
+          >
+            <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
+            <span>{t(item.key)}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

@@ -112,6 +112,35 @@ export function BatteriesPage() {
             detail={search || status || chemistry || source ? t("common.noResultsDetail") : t("fleet.noAssetsDetail")}
           />
         ) : (
+          <>
+          <div className="mobile-asset-list">
+            {filtered.map((item) => (
+              <Link className="mobile-asset-card" key={item.id} to={`/batteries/${item.id}`}>
+                <div className="mobile-asset-top">
+                  <div className="mobile-asset-id">
+                    <strong>{item.asset_id}</strong>
+                    <span>{item.model ?? "—"} · {item.serial_number ?? "—"}</span>
+                  </div>
+                  <StatusBadge status={item.status} />
+                </div>
+                <div className="mobile-asset-metrics">
+                  <div className="mobile-asset-metric">
+                    <span>SOC</span>
+                    <strong>{item.latest.soc ? formatNumber(item.latest.soc.value, "%") : t("common.noData")}</strong>
+                  </div>
+                  <div className="mobile-asset-metric">
+                    <span>SOH</span>
+                    <strong>{item.latest.soh ? formatNumber(item.latest.soh.value, "%") : t("common.noData")}</strong>
+                  </div>
+                  <div className="mobile-asset-metric">
+                    <span>{t("fleet.source")}</span>
+                    <strong>{item.latest.soh ? t(`source.${item.latest.soh.source}`) : t("common.noData")}</strong>
+                  </div>
+                </div>
+                <span className="mobile-asset-open">{t("mobile.openPassport")} →</span>
+              </Link>
+            ))}
+          </div>
           <div className="table-wrap">
             <table className="data-table fleet-table">
               <thead>
@@ -171,6 +200,7 @@ export function BatteriesPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         <div className="table-foot">
           <span>{t("fleet.total", { n: filtered.length })}</span>
