@@ -36,7 +36,7 @@ services:
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-20}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:8892}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://127.0.0.1:8892,http://localhost}
     volumes:
       - pinlab_app_qa_uploads:/data/uploads
     depends_on:

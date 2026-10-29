@@ -19,4 +19,5 @@ backend/alembic/__pycache__/
 backend/alembic/versions/__pycache__/
 backups/
 uploads/
+artifacts/
 .DS_Store

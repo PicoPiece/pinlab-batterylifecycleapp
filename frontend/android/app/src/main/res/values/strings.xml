@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PinLab Battery Lifecycle</string>
+    <string name="title_activity_main">PinLab Battery Lifecycle</string>
+    <string name="package_name">com.pinlab.batterylifecycle</string>
+    <string name="custom_url_scheme">com.pinlab.batterylifecycle</string>
+</resources>

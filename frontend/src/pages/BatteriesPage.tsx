@@ -174,7 +174,7 @@ export function BatteriesPage() {
         )}
         <div className="table-foot">
           <span>{t("fleet.total", { n: filtered.length })}</span>
-          <span className="provenance-inline"><span className="source-dot source-mock" />{t("dashboard.demoDisclosure")}</span>
+          <span className="provenance-inline"><span className="source-dot source-mock" />{t("dashboard.demoDisclosure", { n: filtered.length })}</span>
         </div>
       </section>
     </div>
