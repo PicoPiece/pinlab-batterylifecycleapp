@@ -108,3 +108,73 @@ See `frontend/src/mobile/bleGateway.ts`. It defines discovery, identity/model, p
 - Emulator verification only; physical-device verification pending if no device is available.
 - No offline sync, push notifications, real-time BMS, MQTT/Node-RED/ThingsBoard or app-store packaging.
 - `@capacitor/assets` is a development-only asset generator and contributes dev dependency audit findings.
+
+---
+
+# v0.2 — Live Server Integration
+
+## Decision
+
+For safe production reuse of the existing web authentication, v0.2 uses a **same-origin Capacitor wrapper**: `server.url` points to the HTTPS Web App origin. The WebView then has the same origin as the FastAPI API (`/api/v1`), so the existing HttpOnly/Secure/SameSite=Lax cookie, CORS allowlist and CSRF Origin guard remain unchanged.
+
+This avoids the unsafe alternative of loading local assets from `https://localhost` and calling production cross-origin, which would require production CORS and cookie changes.
+
+## Build
+
+```bash
+cd frontend
+npm run build
+CAPACITOR_SERVER_URL='https://pinlab-app.picopiece.com' npx cap sync android
+cd android
+./gradlew assembleDebug --no-daemon
+```
+
+The generated Android config contains `server.url: https://pinlab-app.picopiece.com`; the source default remains local for POC/QA builds.
+
+## Artifact
+
+```text
+/home/picopiece/PinLab/Projects/BatteryLifecycleApp/artifacts/android/PinLab-BatteryLifecycle-0.2.0-debug.apk
+SHA256 972c8adfb777c2c4aab10b3767140e9f2ed2e34d5093e36c9000f7d9d9f751c2
+Size   5,149,439 bytes
+Version 0.2.0 (versionCode 2)
+```
+
+## QA HTTPS staging result
+
+A Cloudflare Quick Tunnel exposed the QA stack over HTTPS without ADB. The APK loaded the QA Web App same-origin.
+
+| Check | Result |
+|---|---|
+| HTTPS WebView origin | PASS — QA tunnel origin |
+| No `adb reverse` | PASS |
+| Login / dashboard GET | PASS |
+| Authenticated inspection POST | PASS — QA inspection ID 12 |
+| Inspection visible to QA Web/API | PASS |
+| Session persistence after app restart | PASS after native `CookieManager.flush()` |
+| Logout | PASS |
+| Production untouched | PASS |
+
+## Production smoke
+
+| Check | Result |
+|---|---|
+| Production URL loaded in APK | PASS — `https://pinlab-app.picopiece.com/login` |
+| WebView origin | PASS — production origin |
+| `/api/v1/health` from WebView | PASS — HTTP 200 |
+| Unauthenticated `/auth/me` | PASS — HTTP 401 |
+| Production login with real account | **BLOCKED** — no authorized production test account/approval |
+| Production inspection create + Web verification | **BLOCKED** — would write production data |
+| Physical device Wi-Fi/4G | **BLOCKED** — no physical device attached |
+
+## Required production changes
+
+For the recommended same-origin wrapper: **none** to auth/CORS/CSRF; only CTO approval to use a dedicated production test account and, separately, approval for a controlled inspection-write test.
+
+If local bundled assets plus production API are required later, production would need a reviewed CORS allowlist for the WebView origin and a SameSite/cookie or native secure-token design. That is not approved or implemented.
+
+## Rollback
+
+- Uninstall/reinstall the APK; v0.1 APK remains available.
+- No production deployment or production data mutation was performed.
+- QA changes were local to `.env.qa` (CORS/cookie test settings) and the QA database only.
