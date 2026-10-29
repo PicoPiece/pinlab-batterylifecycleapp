@@ -8,8 +8,8 @@ import { StatusBadge } from "../components/StatusBadge";
 import { formatDateTime, formatNumber } from "../format";
 import type { BatteryPortfolioItem, DashboardSummary } from "../types";
 
-function percent(value: number | null | undefined): string {
-  return value === null || value === undefined ? "No Data" : `${formatNumber(value, "%")}`;
+function percent(value: number | null | undefined, noDataLabel: string): string {
+  return value === null || value === undefined ? noDataLabel : `${formatNumber(value, "%")}`;
 }
 
 export function DashboardPage() {
@@ -61,7 +61,7 @@ export function DashboardPage() {
   const spotlight = portfolio.slice(0, 5);
 
   return (
-    <div className="stack-lg">
+    <div className="stack-lg dashboard-page">
       <div className="page-intro">
         <div>
           <span className="eyebrow">{t("dashboard.kicker")}</span>
@@ -121,17 +121,17 @@ export function DashboardPage() {
             <div className="component-row">
               <span>{t("dashboard.weightedSoh")}</span>
               <div className="component-track"><i style={{ width: `${health.weighted_soh ?? 0}%` }} /></div>
-              <strong>{percent(health.weighted_soh)}</strong>
+              <strong>{percent(health.weighted_soh, t("common.noData"))}</strong>
             </div>
             <div className="component-row">
               <span>{t("dashboard.dataCoverage")}</span>
               <div className="component-track"><i style={{ width: `${health.data_coverage}%` }} /></div>
-              <strong>{percent(health.data_coverage)}</strong>
+              <strong>{percent(health.data_coverage, t("common.noData"))}</strong>
             </div>
             <div className="component-row">
               <span>{t("dashboard.inspectionCurrency")}</span>
               <div className="component-track"><i style={{ width: `${health.inspection_currency}%` }} /></div>
-              <strong>{percent(health.inspection_currency)}</strong>
+              <strong>{percent(health.inspection_currency, t("common.noData"))}</strong>
             </div>
           </div>
         </section>
@@ -196,7 +196,7 @@ export function DashboardPage() {
                       <Link className="table-link" to={`/batteries/${asset.id}`}>{asset.asset_id}</Link>
                       <div className="subtext">{asset.model ?? asset.serial_number ?? "—"}</div>
                     </td>
-                    <td><strong>{percent(asset.latest.soh?.value)}</strong></td>
+                    <td><strong>{percent(asset.latest.soh?.value, t("common.noData"))}</strong></td>
                     <td><StatusBadge status={asset.status} /></td>
                     <td>
                       <span className={`source-dot source-${asset.latest.soh?.source ?? "none"}`} />

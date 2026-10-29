@@ -65,3 +65,56 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* v0.2.1: compact Android dashboard. Desktop layout is unchanged. */
+@media (max-width: 640px) {
+  .dashboard-page { display: flex; flex-direction: column; }
+  .dashboard-page > .page-intro { order: 1; }
+  .dashboard-page > .dashboard-main-grid { order: 2; display: flex; flex-direction: column; }
+  .dashboard-page > .kpi-grid { order: 3; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dashboard-page > .dashboard-lower-grid { order: 4; display: flex; flex-direction: column; }
+  .dashboard-page > .demo-disclosure { order: 5; }
+
+  .dashboard-page .dashboard-main-grid .attention-card { order: 1; }
+  .dashboard-page .dashboard-main-grid .health-score-card { order: 2; }
+
+  /* The health KPI duplicates the score card on a phone. */
+  .dashboard-page .kpi-blue { display: none; }
+  .dashboard-page .kpi-card { min-width: 0; }
+  .dashboard-page .kpi-value { font-size: 1.35rem; }
+  .dashboard-page .kpi-hint { font-size: 0.64rem; }
+
+  .dashboard-page .health-score-card .health-score-value { font-size: 2rem; }
+  .dashboard-page .health-score-card .component-list { gap: 7px; }
+
+  /* Keep the secondary provenance/activity cards out of the first mobile screen. */
+  .dashboard-page .dashboard-lower-grid .side-stack { display: none; }
+
+  /* Featured assets: fixed three-column table, no horizontal page overflow. */
+  .dashboard-page .table-wrap { overflow-x: hidden; }
+  .dashboard-page .compact-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .dashboard-page .compact-table th,
+  .dashboard-page .compact-table td { white-space: normal; }
+  .dashboard-page .compact-table th:first-child,
+  .dashboard-page .compact-table td:first-child { width: 46%; }
+  .dashboard-page .compact-table th:nth-child(2),
+  .dashboard-page .compact-table td:nth-child(2) { width: 24%; }
+  .dashboard-page .compact-table th:nth-child(3),
+  .dashboard-page .compact-table td:nth-child(3) { width: 30%; }
+  .dashboard-page .compact-table td:first-child strong { overflow-wrap: anywhere; }
+  .dashboard-page .compact-table .subtext { overflow-wrap: anywhere; }
+}
+
+/* Keep the phone dashboard focused on the first three risks; full queue remains linked. */
+@media (max-width: 640px) {
+  .dashboard-page .attention-list .attention-item:nth-child(n + 4) { display: none; }
+}
+
+@media (max-width: 640px) {
+  /* Source/updated columns are intentionally hidden on phones; avoid an inaccurate subtitle. */
+  .dashboard-page .dashboard-lower-grid > .card > .card-head h3 { display: none; }
+}
