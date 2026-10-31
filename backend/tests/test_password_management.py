@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.models import OrganizationMembership, OrganizationRole
 from .conftest import TEST_BASE_URL
 
 
@@ -17,6 +18,11 @@ def login_user(email, password):
     client = TestClient(app, base_url=TEST_BASE_URL)
     response = client.post("/api/v1/auth/login", json={"email": email, "password": password})
     return client, response
+
+
+def add_membership(db, organization, user_id, role=OrganizationRole.viewer):
+    db.add(OrganizationMembership(user_id=user_id, organization_id=organization.id, role=role))
+    db.commit()
 
 
 def test_change_password_rejects_bad_policy_and_current(admin_client):
@@ -72,11 +78,12 @@ def test_change_password_revokes_old_session(admin_client):
     assert new_login.json()["must_change_password"] is False
 
 
-def test_first_login_is_forced_and_password_change_unlocks_api(admin_client):
+def test_first_login_is_forced_and_password_change_unlocks_api(admin_client, db, pinlab_org):
     email = "forced@example.com"
     temp_password = "TempPassword123!"
     created = create_user_via_admin(admin_client, email, "viewer", temp_password)
     assert created["must_change_password"] is True
+    add_membership(db, pinlab_org, created["id"], OrganizationRole.viewer)
 
     user_client, login = login_user(email, temp_password)
     assert login.status_code == 200
@@ -101,10 +108,11 @@ def test_first_login_is_forced_and_password_change_unlocks_api(admin_client):
     assert unlocked.get("/api/v1/dashboard").status_code == 200
 
 
-def test_admin_reset_forces_change_and_revokes_target_session(admin_client):
+def test_admin_reset_forces_change_and_revokes_target_session(admin_client, db, pinlab_org):
     email = "reset-target@example.com"
     old_password = "TempPassword123!"
     created = create_user_via_admin(admin_client, email, "technician", old_password)
+    add_membership(db, pinlab_org, created["id"], OrganizationRole.pinlab_technician)
     target_client, login = login_user(email, old_password)
     assert login.status_code == 200
     old_token = target_client.cookies.get("pinlab_session")
@@ -126,8 +134,9 @@ def test_admin_reset_forces_change_and_revokes_target_session(admin_client):
     assert reset_client.get("/api/v1/auth/me").status_code == 200
 
 
-def test_non_admin_cannot_reset_other_user(admin_client):
+def test_non_admin_cannot_reset_other_user(admin_client, db, pinlab_org):
     created = create_user_via_admin(admin_client, "role-isolation@example.com", "technician")
+    add_membership(db, pinlab_org, created["id"], OrganizationRole.pinlab_technician)
     target_client, login = login_user("role-isolation@example.com", "TempPassword123!")
     assert login.status_code == 200
     forbidden = target_client.post("/api/v1/users/1/reset-password")

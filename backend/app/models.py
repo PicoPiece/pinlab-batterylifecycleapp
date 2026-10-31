@@ -31,6 +31,7 @@ class OrganizationKind(str, Enum):
 
 
 class OrganizationRole(str, Enum):
+    pinlab_super_admin = "pinlab_super_admin"
     pinlab_manager = "pinlab_manager"
     pinlab_technician = "pinlab_technician"
     agency_admin = "agency_admin"
@@ -240,6 +241,24 @@ class BatteryAssignment(Base):
     battery: Mapped[Battery] = relationship(back_populates="assignments")
     user: Mapped[User] = relationship(foreign_keys=[user_id])
     assigned_by: Mapped[User] = relationship(foreign_keys=[assigned_by_id])
+
+
+class SecurityAuditEvent(Base):
+    __tablename__ = "security_audit_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    organization_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    action: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    target_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    target_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    event_metadata: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    actor: Mapped[User] = relationship()
+    organization: Mapped[Organization | None] = relationship()
 
 
 class Measurement(Base):

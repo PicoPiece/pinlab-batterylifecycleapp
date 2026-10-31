@@ -19,7 +19,13 @@ TEST_BASE_URL = "https://testserver"
 
 from app.database import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import User, UserRole  # noqa: E402
+from app.models import (  # noqa: E402
+    Organization,
+    OrganizationMembership,
+    OrganizationRole,
+    User,
+    UserRole,
+)
 from app.security import hash_password  # noqa: E402
 
 
@@ -41,7 +47,23 @@ def client(db):
         yield test_client
 
 
-def create_user(db, email: str, role: UserRole, password: str = "Password123!") -> User:
+@pytest.fixture()
+def pinlab_org(db):
+    organization = Organization(slug="pinlab-internal", name="PinLab Internal", kind="pinlab")
+    db.add(organization)
+    db.commit()
+    db.refresh(organization)
+    return organization
+
+
+def create_user(
+    db,
+    email: str,
+    role: UserRole,
+    password: str = "Password123!",
+    organization: Organization | None = None,
+    organization_role: OrganizationRole | None = None,
+) -> User:
     user = User(
         email=email,
         full_name=email.split("@")[0].title(),
@@ -50,24 +72,51 @@ def create_user(db, email: str, role: UserRole, password: str = "Password123!") 
         is_active=True,
     )
     db.add(user)
+    db.flush()
+    if organization is not None and organization_role is not None:
+        db.add(
+            OrganizationMembership(
+                user_id=user.id,
+                organization_id=organization.id,
+                role=organization_role,
+            )
+        )
     db.commit()
     db.refresh(user)
     return user
 
 
 @pytest.fixture()
-def admin(db):
-    return create_user(db, "admin@example.com", UserRole.admin)
+def admin(db, pinlab_org):
+    return create_user(
+        db,
+        "admin@example.com",
+        UserRole.admin,
+        organization=pinlab_org,
+        organization_role=OrganizationRole.pinlab_super_admin,
+    )
 
 
 @pytest.fixture()
-def technician(db):
-    return create_user(db, "tech@example.com", UserRole.technician)
+def technician(db, pinlab_org):
+    return create_user(
+        db,
+        "tech@example.com",
+        UserRole.technician,
+        organization=pinlab_org,
+        organization_role=OrganizationRole.pinlab_technician,
+    )
 
 
 @pytest.fixture()
-def viewer(db):
-    return create_user(db, "viewer@example.com", UserRole.viewer)
+def viewer(db, pinlab_org):
+    return create_user(
+        db,
+        "viewer@example.com",
+        UserRole.viewer,
+        organization=pinlab_org,
+        organization_role=OrganizationRole.viewer,
+    )
 
 
 def login(client: TestClient, email: str, password: str = "Password123!") -> None:

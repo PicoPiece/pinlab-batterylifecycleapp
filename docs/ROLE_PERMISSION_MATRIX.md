@@ -115,3 +115,27 @@ Migration must be explicit and reversible. A global admin should not be silently
 - Login failure response does not disclose account existence.
 
 **No matrix cell is considered implemented until a backend test proves it.**
+
+## 8. P0-B implementation status (2026-10-31)
+
+Implemented and tested in the backend:
+
+- Organization roles: `pinlab_super_admin`, `pinlab_manager`, `pinlab_technician`, `agency_admin`, `agency_technician`, `viewer`.
+- `AccessContext` scope dependency; no membership returns 403.
+- Battery list, portfolio, detail, update and delete are scoped.
+- Inspection list/detail/create, measurements, lifecycle, dashboard and attachments inherit battery scope; cross-tenant IDs return 404.
+- Attachment list/upload/download/delete require parent battery authorization.
+- Agency Admin can manage only its organization; Agency Technician needs an assignment; Viewer is read-only.
+- PinLab Manager has cross-agency operational visibility; battery organization changes and administrative membership/assignment changes write `security_audit_events`.
+- Global user administration is now Super Admin-only. Agency Admins can create/assign users only inside their own organization through the scoped backend API; the Web UI is Stage 2.
+
+Not implemented in this stage:
+
+- Web organization/membership/assignment screens (Stage 2).
+- Reports/exports endpoints.
+- Warranty/customer/installation API beyond current preview.
+- Real per-session revocation beyond token-version behavior.
+- Android packaging/offline work (Stage 3).
+- Production migration or deployment.
+
+The existing `ROLE_PERMISSION_MATRIX.md` table remains the target matrix; the rows above identify what is currently enforced by backend tests.

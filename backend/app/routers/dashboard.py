@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
+import sqlalchemy as sa
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.authorization import AccessContext, get_access_context
 from app.database import get_db
-from app.deps import get_current_user
 from app.models import Battery, BatteryStatus, Inspection, LifecycleEvent, Measurement, MeasurementMetric, User
 from app.schemas import (
     AttentionBattery,
@@ -38,9 +39,13 @@ def bucket_counts(values: list[float]) -> list[BucketCount]:
 @router.get("", response_model=DashboardSummary)
 def dashboard(
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> DashboardSummary:
-    active_filter = Battery.is_deleted.is_(False)
+    active_filters = [Battery.is_deleted.is_(False)]
+    scope = ctx.battery_filter()
+    if scope is not None:
+        active_filters.append(scope)
+    active_filter = active_filters[0] if len(active_filters) == 1 else sa.and_(*active_filters)
     total = db.scalar(select(func.count()).select_from(Battery).where(active_filter)) or 0
     rows = db.execute(
         select(Battery.status, func.count()).where(active_filter).group_by(Battery.status)
@@ -74,7 +79,10 @@ def dashboard(
     ]
 
     inspection_rows = db.execute(
-        select(Inspection.battery_id, func.max(Inspection.inspected_at)).group_by(Inspection.battery_id)
+        select(Inspection.battery_id, func.max(Inspection.inspected_at))
+        .join(Battery, Inspection.battery_id == Battery.id)
+        .where(*active_filters)
+        .group_by(Inspection.battery_id)
     ).all()
     last_inspection: dict[int, datetime] = {battery_id: last_at for battery_id, last_at in inspection_rows}
     now = datetime.now(timezone.utc)
@@ -158,7 +166,7 @@ def dashboard(
         select(Inspection, Battery.asset_id, User.full_name)
         .join(Battery, Inspection.battery_id == Battery.id)
         .join(User, Inspection.technician_id == User.id)
-        .where(Battery.is_deleted.is_(False))
+        .where(*active_filters)
         .order_by(Inspection.inspected_at.desc(), Inspection.id.desc())
         .limit(5)
     ).all()
@@ -179,7 +187,7 @@ def dashboard(
         select(LifecycleEvent, Battery.asset_id, User.full_name)
         .join(Battery, LifecycleEvent.battery_id == Battery.id)
         .join(User, LifecycleEvent.actor_id == User.id)
-        .where(Battery.is_deleted.is_(False))
+        .where(*active_filters)
         .order_by(LifecycleEvent.event_at.desc(), LifecycleEvent.id.desc())
         .limit(8)
     ).all()
