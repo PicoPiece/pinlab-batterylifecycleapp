@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from .conftest import TEST_BASE_URL
 
 
 def create_user_via_admin(admin_client, email, role="viewer", password="TempPassword123!"):
@@ -13,7 +14,7 @@ def create_user_via_admin(admin_client, email, role="viewer", password="TempPass
 
 
 def login_user(email, password):
-    client = TestClient(app)
+    client = TestClient(app, base_url=TEST_BASE_URL)
     response = client.post("/api/v1/auth/login", json={"email": email, "password": password})
     return client, response
 
@@ -60,7 +61,7 @@ def test_change_password_revokes_old_session(admin_client):
     )
     assert response.status_code == 204, response.text
 
-    with TestClient(app) as stale:
+    with TestClient(app, base_url=TEST_BASE_URL) as stale:
         stale.cookies.set("pinlab_session", old_token)
         assert stale.get("/api/v1/auth/me").status_code == 401
 
@@ -114,7 +115,7 @@ def test_admin_reset_forces_change_and_revokes_target_session(admin_client):
     assert reset.json()["user"]["must_change_password"] is True
     assert len(temporary) >= 12
 
-    with TestClient(app) as stale:
+    with TestClient(app, base_url=TEST_BASE_URL) as stale:
         stale.cookies.set("pinlab_session", old_token)
         assert stale.get("/api/v1/auth/me").status_code == 401
 

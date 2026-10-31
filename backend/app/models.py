@@ -12,6 +12,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -21,6 +22,19 @@ from app.database import Base
 class UserRole(str, Enum):
     admin = "admin"
     technician = "technician"
+    viewer = "viewer"
+
+
+class OrganizationKind(str, Enum):
+    pinlab = "pinlab"
+    agency = "agency"
+
+
+class OrganizationRole(str, Enum):
+    pinlab_manager = "pinlab_manager"
+    pinlab_technician = "pinlab_technician"
+    agency_admin = "agency_admin"
+    agency_technician = "agency_technician"
     viewer = "viewer"
 
 
@@ -85,6 +99,30 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slug: Mapped[str] = mapped_column(String(80), unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    kind: Mapped[OrganizationKind] = mapped_column(
+        SAEnum(OrganizationKind, native_enum=False, length=16),
+        default=OrganizationKind.agency,
+        nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+    memberships: Mapped[list["OrganizationMembership"]] = relationship(
+        back_populates="organization", cascade="all, delete-orphan", passive_deletes=True
+    )
+    batteries: Mapped[list["Battery"]] = relationship(back_populates="organization")
+    ## p0-a: relationships are available to P0-B; no endpoint uses them yet.
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -103,6 +141,30 @@ class User(Base):
     batteries_created: Mapped[list["Battery"]] = relationship(
         back_populates="created_by", foreign_keys="Battery.created_by_id"
     )
+    organization_memberships: Mapped[list["OrganizationMembership"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+
+class OrganizationMembership(Base):
+    __tablename__ = "organization_memberships"
+    __table_args__ = (
+        UniqueConstraint("user_id", "organization_id", name="uq_organization_memberships_user_org"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    organization_id: Mapped[int] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    role: Mapped[OrganizationRole] = mapped_column(
+        SAEnum(OrganizationRole, native_enum=False, length=32), nullable=False
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    user: Mapped[User] = relationship(back_populates="organization_memberships")
+    organization: Mapped[Organization] = relationship(back_populates="memberships")
 
 
 class Battery(Base):
@@ -135,9 +197,16 @@ class Battery(Base):
     )
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     updated_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    organization_id: Mapped[int | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="RESTRICT"), nullable=True, index=True
+    )
 
     created_by: Mapped[User] = relationship(foreign_keys=[created_by_id])
     updated_by: Mapped[User] = relationship(foreign_keys=[updated_by_id])
+    organization: Mapped[Organization | None] = relationship(back_populates="batteries")
+    assignments: Mapped[list["BatteryAssignment"]] = relationship(
+        back_populates="battery", cascade="all, delete-orphan", passive_deletes=True
+    )
     measurements: Mapped[list["Measurement"]] = relationship(
         back_populates="battery", cascade="all, delete-orphan", passive_deletes=True
     )
@@ -150,6 +219,27 @@ class Battery(Base):
     attachments: Mapped[list["Attachment"]] = relationship(
         back_populates="battery", cascade="all, delete-orphan", passive_deletes=True
     )
+
+
+class BatteryAssignment(Base):
+    __tablename__ = "battery_assignments"
+    __table_args__ = (
+        UniqueConstraint("battery_id", "user_id", name="uq_battery_assignments_battery_user"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    battery_id: Mapped[int] = mapped_column(
+        ForeignKey("batteries.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    assigned_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    battery: Mapped[Battery] = relationship(back_populates="assignments")
+    user: Mapped[User] = relationship(foreign_keys=[user_id])
+    assigned_by: Mapped[User] = relationship(foreign_keys=[assigned_by_id])
 
 
 class Measurement(Base):

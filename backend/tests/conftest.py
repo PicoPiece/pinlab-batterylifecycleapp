@@ -12,6 +12,10 @@ TEST_UPLOADS = Path(tempfile.gettempdir()) / "pinlab_battery_uploads"
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB}"
 os.environ["SECRET_KEY"] = "test-only-secret-key-32-bytes-minimum"
 os.environ["UPLOAD_DIR"] = str(TEST_UPLOADS)
+# Tests use an HTTPS base URL so Secure cookies are exercised without weakening
+# the application's production cookie policy.
+os.environ["COOKIE_SECURE"] = "true"
+TEST_BASE_URL = "https://testserver"
 
 from app.database import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
@@ -33,7 +37,7 @@ def db():
 
 @pytest.fixture()
 def client(db):
-    with TestClient(app) as test_client:
+    with TestClient(app, base_url=TEST_BASE_URL) as test_client:
         yield test_client
 
 
