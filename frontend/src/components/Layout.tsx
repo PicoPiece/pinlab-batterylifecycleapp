@@ -36,6 +36,38 @@ export function Layout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [assetCount, setAssetCount] = useState<number | null>(null);
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const check = async () => {
+      try {
+        await api.health();
+        if (active) setOnline(true);
+      } catch {
+        if (active) setOnline(false);
+      }
+    };
+    void check();
+    const timer = window.setInterval(() => void check(), 10000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -44,7 +76,11 @@ export function Layout() {
     }
     let active = true;
     api.dashboard()
-      .then((data) => active && setAssetCount(data.total_batteries))
+      .then((data) => {
+        if (!active) return;
+        setAssetCount(data.total_batteries);
+        setLastRefresh(new Date());
+      })
       .catch(() => active && setAssetCount(null));
     return () => {
       active = false;
@@ -128,6 +164,11 @@ export function Layout() {
           <strong>{t("nav.demoDataset")}</strong>
           <p>{t("nav.demoNote")}</p>
           <span className="sidebar-status">{assetCount === null ? t("nav.demoDataset") : t("nav.assets", { n: assetCount })}</span>
+          <small className="sidebar-refresh">
+            {lastRefresh
+              ? t("common.lastRefresh", { time: lastRefresh.toLocaleTimeString() })
+              : t("common.noRefresh")}
+          </small>
         </div>
         <div className="sidebar-foot">
           <NavLink className="nav-link account-link" to="/change-password">
@@ -170,6 +211,9 @@ export function Layout() {
                 EN
               </button>
             </div>
+            <span className={`connection-pill ${online ? "connection-online" : "connection-offline"}`}>
+              {online ? t("common.online") : t("common.offline")}
+            </span>
             <span className="env-pill">AGENCY PREVIEW</span>
             <span className="topbar-user">{user?.full_name}</span>
           </div>

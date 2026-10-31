@@ -90,6 +90,7 @@ export const api = {
   changePassword: (payload: { current_password: string; new_password: string; confirm_password: string }) =>
     request<void>("/auth/change-password", { method: "POST", body: JSON.stringify(payload) }),
 
+  health: () => request<{ status: string; database: string; version: string }>("/health"),
   dashboard: () => request<DashboardSummary>("/dashboard"),
 
   listBatteries: (params: { search?: string; status?: string; page?: number; pageSize?: number }) => {

@@ -292,3 +292,7 @@ button, input, select, textarea { font: inherit; }
   .inline-field { align-items: stretch; flex-direction: column; }
   .inline-field .select { min-width: 0; width: 100%; }
 }
+.connection-pill { border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; font-size: .68rem; font-weight: 800; letter-spacing: .04em; }
+.connection-online { background: #ecfdf3; color: #067647; border-color: #abefc6; }
+.connection-offline { background: #fef3f2; color: #b42318; border-color: #fecdca; }
+.sidebar-refresh { display: block; margin-top: 8px; color: var(--muted); font-size: .65rem; }
