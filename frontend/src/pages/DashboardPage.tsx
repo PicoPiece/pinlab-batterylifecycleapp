@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { StatusBadge } from "../components/StatusBadge";
@@ -13,7 +13,7 @@ function percent(value: number | null | undefined, noDataLabel: string): string 
 }
 
 export function DashboardPage() {
-  const { user } = useAuth();
+  const { user, canWrite } = useAuth();
   const { t } = useI18n();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [portfolio, setPortfolio] = useState<BatteryPortfolioItem[]>([]);
@@ -79,7 +79,7 @@ export function DashboardPage() {
             <span className="eyebrow">{t("mobile.home")}</span>
             <h2>{t("mobile.greeting", { name: user?.full_name ?? "PinLab" })}</h2>
           </div>
-          {canWrite(user?.role) ? (
+          {canWrite ? (
             <Link className="btn btn-primary" to="/batteries">{t("mobile.createInspection")}</Link>
           ) : null}
         </div>

@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { RequireAuth, useAuth } from "./auth";
+import { RequireAccess, RequireAuth, useAuth } from "./auth";
 import { Layout } from "./components/Layout";
 import { BatteriesPage } from "./pages/BatteriesPage";
 import { ChangePasswordPage } from "./pages/ChangePasswordPage";
@@ -39,7 +39,7 @@ export default function App() {
         <Route path="/inspections/:id" element={<InspectionDetailPage />} />
         <Route path="/warranty" element={<WarrantyPage />} />
         <Route path="/monitoring" element={<MonitoringPage />} />
-        <Route path="/users" element={<UsersPage />} />
+        <Route path="/users" element={<RequireAccess><UsersPage /></RequireAccess>} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { SpecBadge, StatusBadge } from "../components/StatusBadge";
@@ -12,7 +12,7 @@ const STATUSES: BatteryStatus[] = ["received", "inspecting", "tested", "availabl
 const SOURCE_FILTERS = ["manual", "mock", "telemetry", "none"] as const;
 
 export function BatteriesPage() {
-  const { user } = useAuth();
+  const { access } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [items, setItems] = useState<BatteryPortfolioItem[]>([]);
@@ -70,7 +70,7 @@ export function BatteriesPage() {
           <h2>{t("fleet.title")}</h2>
           <p className="muted">{t("fleet.subtitle")}</p>
         </div>
-        {canWrite(user?.role) ? (
+        {access?.can_create_battery ? (
           <Link className="btn btn-primary" to="/batteries/new">+ {t("fleet.add")}</Link>
         ) : null}
       </div>

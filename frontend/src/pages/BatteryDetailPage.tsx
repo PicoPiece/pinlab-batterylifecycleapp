@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { SpecBadge, StatusBadge } from "../components/StatusBadge";
 import { EmptyState, ErrorState, Loading } from "../components/States";
@@ -22,7 +22,7 @@ type Tab = (typeof TABS)[number];
 export function BatteryDetailPage() {
   const { id } = useParams();
   const batteryId = Number(id);
-  const { user } = useAuth();
+  const { canWrite } = useAuth();
   const { t } = useI18n();
   const [params, setParams] = useSearchParams();
   const rawTab = params.get("tab");
@@ -82,7 +82,7 @@ export function BatteryDetailPage() {
   if (error) return <ErrorState message={error} />;
   if (!battery) return null;
 
-  const writer = canWrite(user?.role);
+  const writer = canWrite;
   const latestSoh = latest.soh ?? null;
   const evidenceReady = inspections.length > 0 && attachments.length > 0;
   const source = latestSoh?.source ?? latest.soc?.source;

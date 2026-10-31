@@ -127,11 +127,11 @@ Implemented and tested in the backend:
 - Attachment list/upload/download/delete require parent battery authorization.
 - Agency Admin can manage only its organization; Agency Technician needs an assignment; Viewer is read-only.
 - PinLab Manager has cross-agency operational visibility; battery organization changes and administrative membership/assignment changes write `security_audit_events`.
-- Global user administration is now Super Admin-only. Agency Admins can create/assign users only inside their own organization through the scoped backend API; the Web UI is Stage 2.
+- Global user administration is now Super Admin-only. Agency Admins can create/assign users only inside their own organization through the scoped backend API.
+- Stage 2 Web UI added: internal user administration, organization/membership/role management, battery ownership/technician assignment, activation controls, scoped password reset and audit history. Admin navigation and routes are hidden for Technician/Viewer; backend denial remains authoritative.
 
 Not implemented in this stage:
 
-- Web organization/membership/assignment screens (Stage 2).
 - Reports/exports endpoints.
 - Warranty/customer/installation API beyond current preview.
 - Real per-session revocation beyond token-version behavior.

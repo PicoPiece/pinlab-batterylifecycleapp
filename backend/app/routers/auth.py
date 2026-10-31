@@ -5,14 +5,14 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.deps import get_current_user
-from app.models import User
+from app.models import OrganizationMembership, OrganizationRole, User
 from app.rate_limit import (
     clear_login_failures,
     is_login_blocked,
     login_key,
     record_login_failure,
 )
-from app.schemas import ChangePasswordRequest, LoginRequest, UserRead
+from app.schemas import AccessMembershipRead, AccessRead, ChangePasswordRequest, LoginRequest, UserRead
 from app.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -112,3 +112,66 @@ def logout(response: Response) -> Response:
 def me(response: Response, user: User = Depends(get_current_user)) -> User:
     response.headers["Cache-Control"] = "no-store"
     return user
+
+
+@router.get("/access", response_model=AccessRead)
+def access(
+    response: Response,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> AccessRead:
+    memberships = list(
+        db.scalars(
+            select(OrganizationMembership)
+            .where(
+                OrganizationMembership.user_id == user.id,
+                OrganizationMembership.is_active.is_(True),
+            )
+            .order_by(OrganizationMembership.id)
+        ).all()
+    )
+    roles = {membership.role for membership in memberships}
+    writer_roles = {
+        OrganizationRole.pinlab_super_admin,
+        OrganizationRole.pinlab_manager,
+        OrganizationRole.pinlab_technician,
+        OrganizationRole.agency_admin,
+        OrganizationRole.agency_technician,
+    }
+    can_create_battery = bool(
+        roles
+        & {
+            OrganizationRole.pinlab_super_admin,
+            OrganizationRole.pinlab_manager,
+            OrganizationRole.pinlab_technician,
+            OrganizationRole.agency_admin,
+        }
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return AccessRead(
+        user=UserRead.model_validate(user),
+        is_super_admin=OrganizationRole.pinlab_super_admin in roles,
+        is_manager=OrganizationRole.pinlab_manager in roles,
+        is_agency_admin=OrganizationRole.agency_admin in roles,
+        can_write=bool(roles & writer_roles),
+        can_create_battery=can_create_battery,
+        can_manage_access=bool(
+            roles
+            & {
+                OrganizationRole.pinlab_super_admin,
+                OrganizationRole.pinlab_manager,
+                OrganizationRole.agency_admin,
+            }
+        ),
+        memberships=[
+            AccessMembershipRead(
+                id=membership.id,
+                organization_id=membership.organization_id,
+                organization_name=membership.organization_name,
+                organization_slug=membership.organization_slug,
+                role=membership.role,
+                is_active=membership.is_active,
+            )
+            for membership in memberships
+        ],
+    )

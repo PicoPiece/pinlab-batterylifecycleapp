@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { Loading } from "../components/States";
 import type { Battery, InspectionResult } from "../types";
@@ -22,7 +22,7 @@ export function InspectionPage() {
   const { id } = useParams();
   const batteryId = Number(id);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { canWrite } = useAuth();
   const { t } = useI18n();
   const [battery, setBattery] = useState<Battery | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,7 +85,7 @@ export function InspectionPage() {
     };
   }, [batteryId]);
 
-  if (!canWrite(user?.role)) {
+  if (!canWrite) {
     return (
       <div className="state-box state-error">
         <strong>{t("inspectionForm.noPermission")}</strong>

@@ -1,5 +1,80 @@
 export type Role = "admin" | "technician" | "viewer";
 
+export type OrganizationRole =
+  | "pinlab_super_admin"
+  | "pinlab_manager"
+  | "pinlab_technician"
+  | "agency_admin"
+  | "agency_technician"
+  | "viewer";
+
+export interface AccessMembership {
+  id: number;
+  organization_id: number;
+  organization_name: string;
+  organization_slug: string;
+  role: OrganizationRole;
+  is_active: boolean;
+}
+
+export interface AccessInfo {
+  user: User;
+  is_super_admin: boolean;
+  is_manager: boolean;
+  is_agency_admin: boolean;
+  can_write: boolean;
+  can_create_battery: boolean;
+  can_manage_access: boolean;
+  memberships: AccessMembership[];
+}
+
+export interface Organization {
+  id: number;
+  slug: string;
+  name: string;
+  kind: "pinlab" | "agency";
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Membership {
+  id: number;
+  user_id: number;
+  organization_id: number;
+  organization_name: string;
+  user_email: string;
+  user_full_name: string;
+  role: OrganizationRole;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface BatteryAssignment {
+  id: number;
+  battery_id: number;
+  battery_asset_id: string;
+  user_id: number;
+  user_email: string;
+  user_full_name: string;
+  assigned_by_id: number;
+  is_active: boolean;
+  created_at: string;
+  ended_at: string | null;
+}
+
+export interface SecurityAuditEvent {
+  id: number;
+  actor_id: number;
+  actor_email: string;
+  actor_full_name: string;
+  organization_id: number | null;
+  action: string;
+  target_type: string;
+  target_id: number | null;
+  event_metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -56,6 +131,7 @@ export interface Battery {
   updated_at: string;
   created_by_id: number;
   updated_by_id: number;
+  organization_id: number | null;
 }
 
 export interface Measurement {

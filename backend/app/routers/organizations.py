@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +9,7 @@ from app.authorization import AccessContext, forbid, get_access_context
 from app.database import get_db
 from app.models import Organization, OrganizationMembership, OrganizationRole, User, UserRole
 from app.schemas import (
+    AdminPasswordResetResponse,
     OrganizationCreate,
     OrganizationMembershipCreate,
     OrganizationMembershipRead,
@@ -123,6 +126,52 @@ def create_organization_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.post(
+    "/{organization_id}/users/{user_id}/reset-password",
+    response_model=AdminPasswordResetResponse,
+)
+def reset_organization_user_password(
+    organization_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    ctx: AccessContext = Depends(get_access_context),
+) -> AdminPasswordResetResponse:
+    if not ctx.can_manage_org(organization_id):
+        raise forbid()
+    membership = db.scalar(
+        select(OrganizationMembership).where(
+            OrganizationMembership.organization_id == organization_id,
+            OrganizationMembership.user_id == user_id,
+        )
+    )
+    if not membership:
+        raise HTTPException(status_code=404, detail="Không tìm thấy thành viên")
+    user = db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    if user.id == ctx.user.id:
+        raise HTTPException(status_code=400, detail="Dùng chức năng đổi mật khẩu cho tài khoản của bạn")
+    temporary_password = secrets.token_hex(24)
+    user.hashed_password = hash_password(temporary_password)
+    user.must_change_password = True
+    user.token_version += 1
+    record_security_event(
+        db,
+        actor_id=ctx.user.id,
+        action="organization.user.password_reset",
+        target_type="user",
+        target_id=user.id,
+        organization_id=organization_id,
+        metadata={"membership_id": membership.id},
+    )
+    db.commit()
+    db.refresh(user)
+    return AdminPasswordResetResponse(
+        temporary_password=temporary_password,
+        user=UserRead.model_validate(user),
+    )
 
 
 @router.get("/{organization_id}/memberships", response_model=list[OrganizationMembershipRead])

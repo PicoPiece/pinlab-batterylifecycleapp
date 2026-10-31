@@ -30,7 +30,7 @@ const pageKeys: Record<string, string> = {
 };
 
 export function Layout() {
-  const { user, logout } = useAuth();
+  const { user, access, logout } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,6 +67,15 @@ export function Layout() {
   };
 
   const changeLang = (next: Lang) => setLang(next);
+  const effectiveRole = access?.is_super_admin
+    ? "pinlab_super_admin"
+    : access?.is_manager
+      ? "pinlab_manager"
+      : access?.is_agency_admin
+        ? "agency_admin"
+        : access?.can_write
+          ? "technician"
+          : "viewer";
 
   return (
     <div className="app-shell">
@@ -98,7 +107,7 @@ export function Layout() {
 
         <nav className="main-nav" aria-label="Primary navigation" onClick={() => setMenuOpen(false)}>
           {navItems
-            .filter((item) => !item.adminOnly || user?.role === "admin")
+            .filter((item) => !item.adminOnly || access?.can_manage_access)
             .map((item) => (
               <NavLink
                 key={item.to}
@@ -129,7 +138,7 @@ export function Layout() {
             <span className="avatar">{(user?.full_name ?? "?").slice(0, 1).toUpperCase()}</span>
             <div>
               <strong>{user?.full_name}</strong>
-              <small>{user ? t(`role.${user.role}`) : ""}</small>
+              <small>{user ? t(`role.${effectiveRole}`) : ""}</small>
             </div>
           </div>
           <button className="btn btn-ghost btn-full" onClick={() => void handleLogout()}>

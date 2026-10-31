@@ -57,6 +57,26 @@ class AdminPasswordResetResponse(BaseModel):
     user: UserRead
 
 
+class AccessMembershipRead(BaseModel):
+    id: int
+    organization_id: int
+    organization_name: str
+    organization_slug: str
+    role: OrganizationRole
+    is_active: bool
+
+
+class AccessRead(BaseModel):
+    user: UserRead
+    is_super_admin: bool
+    is_manager: bool
+    is_agency_admin: bool
+    can_write: bool
+    can_create_battery: bool
+    can_manage_access: bool
+    memberships: list[AccessMembershipRead]
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str = Field(min_length=2, max_length=160)
@@ -161,6 +181,9 @@ class OrganizationMembershipRead(ORMModel):
     id: int
     user_id: int
     organization_id: int
+    organization_name: str
+    user_email: str
+    user_full_name: str
     role: OrganizationRole
     is_active: bool
     created_at: datetime
@@ -186,7 +209,10 @@ class OrganizationMembershipUpdate(BaseModel):
 class BatteryAssignmentRead(ORMModel):
     id: int
     battery_id: int
+    battery_asset_id: str
     user_id: int
+    user_email: str
+    user_full_name: str
     assigned_by_id: int
     is_active: bool
     created_at: datetime
@@ -200,6 +226,8 @@ class BatteryAssignmentCreate(BaseModel):
 class SecurityAuditEventRead(ORMModel):
     id: int
     actor_id: int
+    actor_email: str
+    actor_full_name: str
     organization_id: int | None
     action: str
     target_type: str

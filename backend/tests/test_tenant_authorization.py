@@ -57,6 +57,14 @@ def test_tenant_isolation_roles_assignments_and_audit(admin_client, db, pinlab_o
     viewer_client = api_client(a_viewer.email)
     no_membership_client = api_client(no_membership.email)
     try:
+        # Current access is discoverable for UX; it grants nothing beyond the backend.
+        access = a_client.get("/api/v1/auth/access")
+        assert access.status_code == 200
+        assert access.json()["can_write"] is True
+        assert access.json()["can_create_battery"] is True
+        assert access.json()["can_manage_access"] is True
+        assert {item["organization_slug"] for item in access.json()["memberships"]} == {"agency-a"}
+
         # 1. Agency A cannot read/list B batteries; dashboard/count is scoped.
         listing = a_client.get("/api/v1/batteries")
         assert listing.status_code == 200
@@ -91,6 +99,17 @@ def test_tenant_isolation_roles_assignments_and_audit(admin_client, db, pinlab_o
             json={"user_id": target["id"], "role": "agency_technician"},
         )
         assert allowed_membership.status_code == 201
+        membership_rows = a_client.get(f"/api/v1/organizations/{agency_a.id}/memberships")
+        assert membership_rows.status_code == 200
+        assert all("user_email" in row for row in membership_rows.json())
+        reset = a_client.post(
+            f"/api/v1/organizations/{agency_a.id}/users/{target['id']}/reset-password"
+        )
+        assert reset.status_code == 200
+        assert reset.json()["temporary_password"]
+        assert b_client.post(
+            f"/api/v1/organizations/{agency_b.id}/users/{target['id']}/reset-password"
+        ).status_code == 404
         created_agency_user = a_client.post(
             f"/api/v1/organizations/{agency_a.id}/users",
             json={
@@ -140,12 +159,22 @@ def test_tenant_isolation_roles_assignments_and_audit(admin_client, db, pinlab_o
             json={"user_id": a_tech.id},
         )
         assert assigned.status_code == 201
+        assert assigned.json()["user_email"] == a_tech.email
         assert tech_client.get(f"/api/v1/batteries/{a_battery['id']}").status_code == 200
         audit_actions = set(db.scalars(select(SecurityAuditEvent.action)).all())
         assert "battery.assignment.create" in audit_actions
+        audit_api = a_client.get(f"/api/v1/organizations/{agency_a.id}/audit")
+        assert audit_api.status_code == 200
+        assert any(item["actor_email"] == a_admin.email for item in audit_api.json())
 
         # 8. No membership is denied by default, even for list endpoints.
         assert no_membership_client.get("/api/v1/batteries").status_code == 403
+        no_access = no_membership_client.get("/api/v1/auth/access")
+        assert no_access.status_code == 200
+        assert no_access.json()["can_write"] is False
+        assert no_access.json()["can_create_battery"] is False
+        assert no_access.json()["can_manage_access"] is False
+        assert no_access.json()["memberships"] == []
 
         # 9. Cross-tenant battery mutation is hidden as 404.
         assert a_client.patch(f"/api/v1/batteries/{b_battery['id']}", json={"notes": "cross"}).status_code == 404

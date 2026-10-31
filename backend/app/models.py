@@ -167,6 +167,22 @@ class OrganizationMembership(Base):
     user: Mapped[User] = relationship(back_populates="organization_memberships")
     organization: Mapped[Organization] = relationship(back_populates="memberships")
 
+    @property
+    def user_email(self) -> str:
+        return self.user.email
+
+    @property
+    def user_full_name(self) -> str:
+        return self.user.full_name
+
+    @property
+    def organization_name(self) -> str:
+        return self.organization.name
+
+    @property
+    def organization_slug(self) -> str:
+        return self.organization.slug
+
 
 class Battery(Base):
     __tablename__ = "batteries"
@@ -242,6 +258,18 @@ class BatteryAssignment(Base):
     user: Mapped[User] = relationship(foreign_keys=[user_id])
     assigned_by: Mapped[User] = relationship(foreign_keys=[assigned_by_id])
 
+    @property
+    def user_email(self) -> str:
+        return self.user.email
+
+    @property
+    def user_full_name(self) -> str:
+        return self.user.full_name
+
+    @property
+    def battery_asset_id(self) -> str:
+        return self.battery.asset_id
+
 
 class SecurityAuditEvent(Base):
     __tablename__ = "security_audit_events"
@@ -259,6 +287,14 @@ class SecurityAuditEvent(Base):
 
     actor: Mapped[User] = relationship()
     organization: Mapped[Organization | None] = relationship()
+
+    @property
+    def actor_email(self) -> str:
+        return self.actor.email
+
+    @property
+    def actor_full_name(self) -> str:
+        return self.actor.full_name
 
 
 class Measurement(Base):
