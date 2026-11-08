@@ -231,13 +231,25 @@
 - APK: `artifacts/android/PinLab-BatteryLifecycle-0.4.0-internal-test-debug.apk`
 - Manifest: `artifacts/android/PinLab-BatteryLifecycle-0.4.0-internal-test-manifest.json`
 
-### Mission 017 — Server MQTT Broker, Ingestion & PostgreSQL
+### Mission 017 — Server MQTT Broker, Ingestion, PostgreSQL & Cloudflare WSS
 
 - **Project:** BatteryLifecycleApp / IoT Gateway
-- **Scope:** Read-only infrastructure audit, isolated development Mosquitto broker, MQTT contract v1, manual gateway/battery mapping, ingestion consumer, raw telemetry schema, 7-day retention job and synthetic tests.
-- **Status:** **IMPLEMENTED / TESTED IN ISOLATED DEVELOPMENT; NETWORK ROUTE PREPARED — AWAITING CTO APPROVAL; NOT PRODUCTION-DEPLOYED**.
+- **Scope:** Read-only infrastructure audit, isolated development Mosquitto broker, MQTT contract v1, manual gateway/battery mapping, ingestion consumer, raw telemetry schema, 7-day retention job, Cloudflare WSS route verification and synthetic network tests.
+- **Status:** **IMPLEMENTED / TESTED / EXTERNAL WSS VERIFIED; REAL ESP32 HARDWARE PENDING; NOT PRODUCTION-DEPLOYED**.
 - **Branch:** `mission-017-server-mqtt`
-- **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`.
-- **Tests:** Backend 44/44 PASS; dev Mosquitto auth/ACL, WebSocket QoS 1, PostgreSQL persistence/dedup, broker/consumer reconnect and retention tests PASS.
-- **External WSS:** `wss://mqtt-pinlab.picopiece.com/mqtt` verified 2026-11-08; DNS/TLS/WebSocket/QoS 1/auth/persistence PASS; ACL denial and broker-reconnect stability PASS. Existing app and OpenProject routes remained healthy. Real ESP32 telemetry remains untested.
-- **Next:** CTO approves public WSS route/access policy; ESP32 Agent receives schema, broker URI, credentials via secure channel and registered Gateway ID.
+- **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `deploy/mqtt-dev/CLOUDFLARE_ROUTE.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`.
+- **Latest commits:** `e91d290` pipeline, `3b2a304` route preparation, `b0c5195` external WSS evidence, `92024db` stability/ACL evidence.
+
+#### Report
+
+- Development Mosquitto broker: authenticated, anonymous disabled, per-device ACL, WebSocket listener, QoS 1, connection/packet limits and bounded logs.
+- MQTT contract v1 and simulated sample created; ingestion validates schema, gateway identity, organization mapping, historical slot assignment and message deduplication.
+- Dev PostgreSQL migration `e5f6a7b8c9d0` adds `gateways`, `gateway_battery_assignments`, `telemetry_samples`; no production migration.
+- Retention dry-run/apply deletes only `telemetry_samples` older than 7 days; Passport/business history retained.
+- Backend tests: **44/44 PASS**.
+- Exact identity verified: Gateway `GW-000001`, username/client ID `gw-000001`, slot `0`, battery `DEMO-MQTT-001`, topic `pinlab/v1/gateways/GW-000001/telemetry`.
+- External WSS `wss://mqtt-pinlab.picopiece.com/mqtt` verified with public DNS/TLS, WebSocket upgrade, authenticated QoS 1 publish, QA PostgreSQL persistence, ACL denial and broker-reconnect stability.
+- QA proof: `verify-wss-1794124282` sample id 9; stability samples `stability-1794124309-0/317-1/325-2`; unauthorized topic returned MQTT v5 `Not authorized`.
+- Existing `pinlab-app` health and `pinlab-pm` login remained **200**.
+- No public 1883/8883; no production database writes; no real hardware PASS claimed.
+- **Next:** ESP32-S3/APESS/PACE hardware integration and physical validation. ESP32 gets URI, schema, Gateway ID and credentials via secure channel.
