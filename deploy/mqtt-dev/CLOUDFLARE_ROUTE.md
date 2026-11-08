@@ -71,3 +71,15 @@ is not yet verified. Do not enable interactive Access.
 5. Confirm the existing consumer persists a SIMULATED sample.
 6. Confirm wrong/anonymous credentials are rejected.
 7. Confirm existing app and OpenProject URLs remain healthy.
+
+## Applied status — 2026-11-08
+
+CTO applied the route. Observed cloudflared configuration version 6:
+
+```text
+mqtt-pinlab.picopiece.com → http://127.0.0.1:9001
+```
+
+External WSS `wss://mqtt-pinlab.picopiece.com/mqtt` was verified with paho,
+TLS hostname/CA verification, authenticated QoS 1 publish and dev PostgreSQL
+persistence. Existing `pinlab-app` and `pinlab-pm` routes remained 200.

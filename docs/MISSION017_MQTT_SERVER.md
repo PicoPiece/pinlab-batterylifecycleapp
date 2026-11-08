@@ -258,3 +258,46 @@ Public WSS is not available yet. Do not point ESP32 at localhost or an unapprove
   with ESP-IDF is not proven and is not enabled.
 - External WSS test is **blocked pending CTO approval** of the route.
 - Existing app/OpenProject routes were not modified.
+
+## 13. External WSS verification (2026-11-08)
+
+CTO configured Cloudflare route:
+
+- Hostname: `mqtt-pinlab.picopiece.com`
+- Origin: `http://127.0.0.1:9001`
+- Tunnel config observed: version 6, existing production routes unchanged.
+
+Verified externally:
+
+| Check | Result |
+|---|---|
+| DNS | PASS — Cloudflare IPv4/IPv6 |
+| TLS certificate | PASS — Let's Encrypt wildcard `*.picopiece.com`, valid through 2027-01-28 |
+| WSS URI | `wss://mqtt-pinlab.picopiece.com/mqtt` |
+| WebSocket upgrade | PASS with paho MQTT |
+| MQTT authentication | PASS for `gw-000001` |
+| TLS hostname/CA verification | PASS — paho system CA, hostname checked |
+| QoS 1 publish | PASS — `rc=0` |
+| Consumer + PostgreSQL persistence | PASS — `message_id=external-wss-1794124037`, dev sample id 8 |
+| Wrong external password | REJECTED — `Not authorized` |
+| Unauthorized gateway topic | Not persisted; DB count 0; ACL restricts device to own topic |
+| Existing app route | PASS — `pinlab-app` health 200 |
+| Existing OpenProject route | PASS — `pinlab-pm` login 200 |
+| Real ESP32 hardware | **NOT TESTED** |
+
+Cloudflare origin log had one EOF/502 from a plain HTTP `curl` probe that did
+not perform a WebSocket upgrade. The subsequent actual WSS MQTT test completed
+successfully; this was not an MQTT failure.
+
+Final ESP32 handoff:
+
+- URI: `wss://mqtt-pinlab.picopiece.com/mqtt`
+- Client ID: `gw-000001`
+- Username: `gw-000001`
+- Topic: `pinlab/v1/gateways/GW-000001/telemetry`
+- QoS: 1
+- TLS: verify Cloudflare/public CA and hostname; no insecure bypass.
+- Gateway: `GW-000001`, slot `0` → `DEMO-MQTT-001`
+- Schema: `backend/app/mqtt/schema/telemetry-v1.schema.json`
+- Credentials: per-device password via secure channel; no password in Git.
+- Test source: `SIMULATED`; real hardware remains unverified.
