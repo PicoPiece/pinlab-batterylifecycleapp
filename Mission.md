@@ -196,12 +196,13 @@
 - **Evidence:** this file and the associated Git commit.
 - **Rule:** future missions update this file in the project they affect, then commit and push.
 
+
 ## Cross-project roadmap status
 
 | Milestone | Status | Evidence / next deliverable |
 |---|---|---|
 | M1 — Internal Web/Android Release | **In progress / QA-ready** | RBAC and Web deployed; Android APK and emulator tests pass; physical Xiaomi acceptance pending |
-| M2 — Real BMS & Gateway PoC | **Not started** | Hardware/interface availability unverified; Mission 006 research only |
+| M2 — Real BMS & Gateway PoC | **Production pilot PASS; analytics development complete** | Mission 017 production telemetry PASS; Mission 018 dashboard implemented/tested, awaiting separate deployment authorization |
 | M3 — Controlled Agency Pilot | **Not started** | Requires tenant-isolation acceptance, CTO approval, account mapping and external access policy |
 | M4 — Battery Health & Maintenance Lifecycle | **Not started** | Requires M2 telemetry and warning/issue workflow |
 
@@ -212,7 +213,7 @@
 3. Existing non-CTO production accounts are unmapped and have no app access.
 4. TEST accounts are labelled TEST and require password reset/change.
 5. Production monitoring/alerting and off-host backup automation are incomplete.
-6. No real BMS, BLE, gateway, telemetry or chart implementation.
+6. Mission 018 analytics is not deployed to production; BLE, CAN, OTA and flash cache remain out of scope.
 7. Mission 007 has no evidence in available records.
 8. OpenProject portfolio sync is blocked on API permission.
 9. No main merge/push without separate approval.
@@ -258,3 +259,26 @@
 - **Production real telemetry:** PASS. New `REAL_BMS` row id 1, message `GW-000001:boot24:227`, 52.534 V, 0.000 A, SOC 35.45%, 35.450/100.000 Ah, 16 cells, 5 temperatures; no duplicates. Existing business records unchanged; app/OpenProject health 200.
 - **Production retention:** 7-day `telemetry_samples` policy active daily at 03:45 via `deploy/mqtt-prod/retention.sh`.
 - **Production evidence:** `docs/MISSION017_PRODUCTION_DEPLOYMENT.md`; OpenProject work package `#56`, activity `230`.
+
+### Mission 018 — PinLab Battery Analytics Dashboard
+
+- **Project:** BatteryLifecycleApp / Web & Android
+- **Scope:** Integrated battery diagnostics dashboard for Battery Detail: historical pack charts, all 16 cell histories, cell imbalance, temperature history, latest/connectivity status, authorized read-only APIs and responsive mobile layout.
+- **Status:** **IMPLEMENTED / TESTED / LOCAL PRODUCTION-COPY VERIFIED; NOT DEPLOYED**.
+- **Branch:** `mission-018-battery-analytics`
+- **Evidence:** `docs/MISSION018_BATTERY_ANALYTICS.md`, `backend/app/routers/telemetry.py`, `backend/app/telemetry.py`, `frontend/src/components/telemetry/`, `frontend/src/telemetry.css`, `frontend/e2e/mission018-analytics.mjs`.
+- **Screenshots:** `ProjectManagement/Mission018/screenshots/` (desktop overview, cell summary, all 16 cells, selected cell, history pack/cell/temperature, mobile overview/cells).
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/1 (stacked on `mission-017-server-mqtt`)
+
+#### Report
+
+- Added authenticated endpoints for latest telemetry and bounded 1h/24h/7d history; pack-only loading is separate from the all-cell series.
+- Enforced existing session, organization and battery-level authorization; cross-organization access returns 404. Only verified `source=REAL_BMS` samples are shown.
+- Raw `measured_at` is used for charts; `received_at` drives Gateway freshness. Freshness thresholds: online ≤30s, stale ≤5m, offline >5m.
+- PostgreSQL performs bucketing: 1h raw (max 1,000), 24h at 5 minutes, 7d at 30 minutes. Cell delta is calculated per raw sample before aggregation and bucket extrema are preserved.
+- Integrated Overview, Cell Analysis and History tabs into Battery Detail using the existing Recharts library. All 16 cell histories, min/max/average, individual selection, delta and five temperature sensors are supported.
+- Latest polling is 15s and visible-only; history is on-demand; stale requests are aborted; charts are dynamically imported and missing data is rendered as gaps.
+- Verification: **53 backend tests passed**, **9 frontend tests passed**, production frontend build passed, and **12/12 browser E2E checks passed** against an isolated read-only copy of production. No production API/frontend, MQTT ingestion, Cloudflare route, firmware or Passport assignment was modified.
+- Performance: on a synthetic 60,480-row PostgreSQL dataset, 7d pack+temperatures was ~1.9s and the full 7d cell series ~3.4s on demand; 24h full was ~0.6s. The 208-real-sample production-copy UI showed ~37.3 MB used JS heap and no mobile horizontal overflow.
+- **Android/Capacitor:** `npx cap sync android` completed successfully; Gradle APK build was not run because Java is unavailable in the agent environment. Responsive WebView layout was verified at 390 px; physical Android acceptance remains pending.
+- **Next gate:** separately authorized production API/frontend deployment; Android physical acceptance remains pending.
