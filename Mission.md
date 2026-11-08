@@ -252,4 +252,4 @@
 - QA proof: `verify-wss-1794124282` sample id 9; stability samples `stability-1794124309-0/317-1/325-2`; unauthorized topic returned MQTT v5 `Not authorized`.
 - Existing `pinlab-app` health and `pinlab-pm` login remained **200**.
 - No public 1883/8883; no production database writes; no real hardware PASS claimed.
-- **Next:** ESP32-S3/APESS/PACE hardware integration and physical validation. ESP32 gets URI, schema, Gateway ID and credentials via secure channel.
+- **Credential status:** development device credential `gw-000001` rotated 2026-11-08; protected local handoff file mode 600; no secret committed or logged. **Next:** ESP32-S3/APESS/PACE hardware integration and physical validation using the secure credential handoff.

@@ -313,3 +313,43 @@ Final ESP32 handoff:
 - Existing PinLab app and OpenProject routes: app health 200, OpenProject login 200.
 - No credentials found in broker/consumer logs.
 - No public 1883/8883; broker remains loopback/Tunnel-only.
+
+## 15. Device credential rotation — 2026-11-08
+
+Mission 017A.3 preparation:
+
+- Rotated **only** the development device account `gw-000001`.
+- Used Mosquitto's supported `mosquitto_passwd -b` procedure.
+- Preserved the existing `pinlab-ingest` password hash; verified unchanged.
+- Preserved ACLs and all other broker accounts.
+- Broker restarted and reported healthy.
+- External WSS authentication with the rotated credential: PASS.
+- QoS 1 publish: PASS; QA sample id 13 (`rotation-1794126868`, SIMULATED).
+- Unauthorized gateway topic with MQTT v5: **Not authorized**.
+- Consumer reconnected and persisted after broker restart.
+- No credential value appeared in broker/consumer logs.
+
+Protected credential handoff file:
+
+```text
+/home/picopiece/.config/pinlab/mqtt/gw-000001.credentials
+```
+
+- Owner: `picopiece`
+- Mode: `600`
+- Contains Gateway ID, MQTT username/client ID, MQTT password, WSS URI, topic and QoS.
+- Not committed to Git, not in `Mission.md`, not printed in reports.
+- Only the authorized firmware provisioning operator should read it and transfer the password to ESP32 NVS over a local/approved channel.
+
+Device identity remains:
+
+```text
+Gateway: GW-000001
+Username: gw-000001
+Client ID: gw-000001
+Topic: pinlab/v1/gateways/GW-000001/telemetry
+WSS: wss://mqtt-pinlab.picopiece.com/mqtt
+QoS: 1
+Battery slot: 0
+Battery: DEMO-MQTT-001
+```
