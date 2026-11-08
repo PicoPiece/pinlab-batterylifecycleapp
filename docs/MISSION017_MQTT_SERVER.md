@@ -231,3 +231,30 @@ Public WSS is not available yet. Do not point ESP32 at localhost or an unapprove
 - Retention dry-run/apply on dev: PASS.
 - Real ESP32 telemetry: **not tested**.
 - Public WSS endpoint: **blocked/not configured**.
+
+## 12. Mission 017-NETWORK preparation (not applied)
+
+- Exact identity re-tested locally:
+  - Gateway `GW-000001`
+  - MQTT username/client ID `gw-000001`
+  - slot `0`
+  - battery `DEMO-MQTT-001`
+  - topic `pinlab/v1/gateways/GW-000001/telemetry`
+  - payload `gateway_id=GW-000001`
+- Local authenticated WebSocket publish with the exact device identity: PASS.
+- Existing PinLab tunnel ingress observed read-only:
+  - `pinlab-pm` → `http://127.0.0.1:8888`
+  - `pinlab-app` → `http://127.0.0.1:8890`
+  - catch-all 404
+- Proposed ingress addition, **not applied**:
+  `mqtt-pinlab.picopiece.com` → `http://127.0.0.1:9001`
+- Proposed DNS CNAME: `mqtt-pinlab` → `<PinLab tunnel UUID>.cfargotunnel.com`.
+- `mqtt-pinlab.picopiece.com` currently has no DNS record.
+- No 1883/8883 public exposure.
+- Mosquitto limits: max connections 20, keepalive 120s, packet 64 KiB,
+  max in-flight 20, max queued 100, persistent-client expiry 1 day.
+- Interactive Cloudflare Access is unsuitable for headless ESP32. The proposed
+  route uses Mosquitto per-device auth + ACL; service-token header compatibility
+  with ESP-IDF is not proven and is not enabled.
+- External WSS test is **blocked pending CTO approval** of the route.
+- Existing app/OpenProject routes were not modified.

@@ -235,9 +235,9 @@
 
 - **Project:** BatteryLifecycleApp / IoT Gateway
 - **Scope:** Read-only infrastructure audit, isolated development Mosquitto broker, MQTT contract v1, manual gateway/battery mapping, ingestion consumer, raw telemetry schema, 7-day retention job and synthetic tests.
-- **Status:** **IMPLEMENTED / TESTED IN ISOLATED DEVELOPMENT; NOT PRODUCTION-DEPLOYED**.
+- **Status:** **IMPLEMENTED / TESTED IN ISOLATED DEVELOPMENT; NETWORK ROUTE PREPARED — AWAITING CTO APPROVAL; NOT PRODUCTION-DEPLOYED**.
 - **Branch:** `mission-017-server-mqtt`
 - **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`.
 - **Tests:** Backend 44/44 PASS; dev Mosquitto auth/ACL, WebSocket QoS 1, PostgreSQL persistence/dedup, broker/consumer reconnect and retention tests PASS.
-- **Blocked:** Public WSS endpoint `wss://mqtt.pinlab.picopiece.com/mqtt` is not configured; DNS/tunnel/firewall changes require CTO approval. Real ESP32 telemetry is not tested by this mission.
+- **Network prep:** target `wss://mqtt-pinlab.picopiece.com/mqtt`; origin `http://127.0.0.1:9001`; exact route documented in `deploy/mqtt-dev/CLOUDFLARE_ROUTE.md`. No DNS/tunnel/Cloudflare changes applied. Public WSS and real ESP32 telemetry remain blocked pending CTO approval.
 - **Next:** CTO approves public WSS route/access policy; ESP32 Agent receives schema, broker URI, credentials via secure channel and registered Gateway ID.
