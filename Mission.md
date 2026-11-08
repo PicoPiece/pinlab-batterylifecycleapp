@@ -202,7 +202,7 @@
 | Milestone | Status | Evidence / next deliverable |
 |---|---|---|
 | M1 — Internal Web/Android Release | **In progress / QA-ready** | RBAC and Web deployed; Android APK and emulator tests pass; physical Xiaomi acceptance pending |
-| M2 — Real BMS & Gateway PoC | **Production pilot PASS; analytics development complete** | Mission 017 production telemetry PASS; Mission 018 dashboard implemented/tested, awaiting separate deployment authorization |
+| M2 — Real BMS & Gateway PoC | **Production pilot + dashboard deployed** | Mission 017 production telemetry PASS; Mission 018/018.1 dashboard deployed to production; Android native acceptance pending |
 | M3 — Controlled Agency Pilot | **Not started** | Requires tenant-isolation acceptance, CTO approval, account mapping and external access policy |
 | M4 — Battery Health & Maintenance Lifecycle | **Not started** | Requires M2 telemetry and warning/issue workflow |
 
@@ -213,7 +213,7 @@
 3. Existing non-CTO production accounts are unmapped and have no app access.
 4. TEST accounts are labelled TEST and require password reset/change.
 5. Production monitoring/alerting and off-host backup automation are incomplete.
-6. Mission 018 analytics and Mission 018.1 classification are development-only; production deployment/migration requires separate CTO approval. BLE, CAN, OTA and flash cache remain out of scope.
+6. Mission 018/018.1 analytics and classification are deployed in production; Android native acceptance remains pending. BLE, CAN, OTA and flash cache remain out of scope.
 7. Mission 007 has no evidence in available records.
 8. OpenProject portfolio sync is blocked on API permission.
 9. No main merge/push without separate approval.
@@ -302,3 +302,26 @@
 - Removed static real-Passport demo badge/banner. DEMO Passports retain warnings; unclassified Passports are neutral. Sidebar/environment labels use backend real/demo counts; workspace label changed to PinLab Workspace.
 - Manual measurement history remains separately labelled and unchanged; telemetry does not create measurement records.
 - Tests: **60 backend tests passed**, **9 frontend tests passed**, production frontend build passed; **4/4 Mission 018.1 browser E2E passed** with 0 console errors. Production remains on `e5f6a7b8c9d0` and `rc-ac3e599`; consumer healthy.
+
+
+### Mission 018-PROD — Dashboard Deployment & Live Data Verification
+
+- **Project:** BatteryLifecycleApp / Production Web
+- **Scope:** Deploy Mission 018 analytics and Mission 018.1 classification to the existing production Web app, apply the approved classification inventory, and verify live REAL_BMS data.
+- **Status:** **PASS** (Android native acceptance separately pending).
+- **Main commit:** `ba0135c7f0bc7900a103c0246a5751c7dd837d33`
+- **Images:** `pinlab-app-backend:rc-ba0135c`, `pinlab-app-frontend:rc-ba0135c`.
+- **Evidence:** `docs/MISSION018_PRODUCTION_DEPLOYMENT.md`, `docs/mission018_prod/`, `ProjectManagement/Mission018_PROD/`.
+
+#### Report
+
+- Verified `origin/main` contains Mission 017, 018 and 018.1 (`ba0135c`).
+- Fresh production backup and isolated restore verification PASS:
+  `/home/picopiece/backups/pinlab-app/mission018-prod-prerelease-20261108T170001Z/`.
+- Applied additive migration `e5f6a7b8c9d0` → `f6a7b8c9d0e1`; classification result **1 real / 16 demo / 0 unclassified**; `PL-APESS-0001` battery 17 is real.
+- Deployed backend/frontend `rc-ba0135c`; existing PostgreSQL data, MQTT consumer, broker, Cloudflare, Gateway assignment and 7-day retention preserved.
+- Compose reconciled/recreated the DB dependency with the same data volume; data integrity verified. The MQTT consumer had one transient DB reconnect/auth error during that restart and recovered without restart or data loss.
+- Live post-deployment rows included `436`, `437`, `438` and latest `447`; source `REAL_BMS`, battery 17, Gateway `GW-000001`, 16 cells, 5 temperatures, SOH NULL.
+- API latest matched PostgreSQL row 447: SOC 35.42%, 52.531 V, 0 A, 35.420/100 Ah, delta 3 mV.
+- Production Web E2E: **12/12 analytics checks + 4/4 classification checks PASS**, 0 console errors, 390px mobile no horizontal overflow.
+- App/OpenProject health HTTP 200; backend/frontend/DB/consumer healthy. Android native acceptance remains pending because the Java/Gradle toolchain is unavailable.

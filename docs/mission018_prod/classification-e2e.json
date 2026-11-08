@@ -1,0 +1,27 @@
+{
+  "generated_at": "2026-11-08T17:02:36.893Z",
+  "base": "https://pinlab-app.picopiece.com",
+  "results": [
+    {
+      "name": "REAL Passport classification + health",
+      "status": "PASS",
+      "detail": "classification badge, REAL_BMS health, SOH N/A"
+    },
+    {
+      "name": "DEMO Passport retains warnings",
+      "status": "PASS",
+      "detail": "DEMO badge + demo banner + manual measurement health"
+    },
+    {
+      "name": "Mission 018 analytics preserved",
+      "status": "PASS",
+      "detail": "all analytics charts still render"
+    },
+    {
+      "name": "Mobile classification presentation",
+      "status": "PASS",
+      "detail": "390px, overflow 0px"
+    }
+  ],
+  "console_errors": []
+}
