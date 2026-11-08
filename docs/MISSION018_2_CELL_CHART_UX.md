@@ -2,6 +2,7 @@
 
 - **Status:** Development complete; not deployed to production.
 - **Branch:** `mission-018.2-cell-chart-ux`
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4
 - **Production target investigated read-only:** https://pinlab-app.picopiece.com/batteries/17?tab=analytics
 
 ## 1. Root cause
@@ -239,5 +240,5 @@ Before/after implementation observations:
 ## 7. Git
 
 - Branch: `mission-018.2-cell-chart-ux`
-- PR: pending creation after commit.
+- Draft PR: https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4
 - No production deployment until CTO approval.

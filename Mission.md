@@ -332,6 +332,7 @@
 - **Scope:** Read-only verification of the 16-cell analytics series mapping and overlap, followed by development-only cell-chart UX improvements.
 - **Status:** **IMPLEMENTED / TESTED / LOCAL PRODUCTION-COPY VERIFIED; NOT DEPLOYED**.
 - **Branch:** `mission-018.2-cell-chart-ux`
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4
 - **Evidence:** `docs/MISSION018_2_CELL_CHART_UX.md`, `docs/mission018_2/`, `frontend/e2e/mission018-2-cell-chart.mjs`.
 
 #### Report
