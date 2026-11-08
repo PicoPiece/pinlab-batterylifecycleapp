@@ -296,3 +296,94 @@ export interface ProviderInfo {
   available: boolean;
   description: string;
 }
+
+export type TelemetryRange = "1h" | "24h" | "7d";
+export type TelemetryConnectivityStatus = "online" | "stale" | "offline" | "unknown";
+
+export interface TelemetryConnectivity {
+  status: TelemetryConnectivityStatus;
+  last_seen_at: string | null;
+  freshness_seconds: number | null;
+  online_after_seconds: number;
+  stale_after_seconds: number;
+}
+
+export interface TelemetryGateway {
+  gateway_id: string;
+  name: string;
+  battery_slot: number;
+  organization_id: number;
+  assigned_at: string | null;
+  connectivity: TelemetryConnectivity;
+}
+
+export interface TelemetrySample {
+  id: number;
+  message_id: string;
+  source: string;
+  protocol: string;
+  time_quality: string;
+  measured_at: string;
+  received_at: string;
+  pack_voltage_v: number;
+  pack_current_a: number;
+  soc_pct: number;
+  soh_pct: number | null;
+  capacity_remaining_ah: number;
+  capacity_full_ah: number;
+  cell_voltages_mv: number[];
+  cell_min_mv: number;
+  cell_max_mv: number;
+  cell_avg_mv: number;
+  cell_delta_mv: number;
+  cell_min_index: number;
+  cell_max_index: number;
+  temperatures_c: number[];
+}
+
+export interface TelemetryLatest {
+  battery_id: number;
+  asset_id: string;
+  gateway: TelemetryGateway | null;
+  sample: TelemetrySample | null;
+  server_time: string;
+}
+
+export interface TelemetryPackPoint {
+  measured_at: string;
+  pack_voltage_v: number;
+  pack_current_a: number;
+  soc_pct: number;
+  capacity_remaining_ah: number;
+  capacity_full_ah: number;
+  cell_min_mv: number;
+  cell_max_mv: number;
+  cell_avg_mv: number;
+  cell_delta_mv: number;
+}
+
+export interface TelemetryCellPoint {
+  measured_at: string;
+  avg_mv: Array<number | null>;
+  min_mv: Array<number | null>;
+  max_mv: Array<number | null>;
+}
+
+export interface TelemetryTemperaturePoint {
+  measured_at: string;
+  values_c: Array<number | null>;
+}
+
+export interface TelemetryHistory {
+  battery_id: number;
+  asset_id: string;
+  range: TelemetryRange;
+  from_at: string;
+  to_at: string;
+  bucket_seconds: number;
+  point_count: number;
+  pack: TelemetryPackPoint[];
+  cells: TelemetryCellPoint[];
+  temperatures: TelemetryTemperaturePoint[];
+  generated_at: string;
+}

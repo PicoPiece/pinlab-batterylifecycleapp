@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
@@ -318,6 +318,94 @@ class Page(BaseModel, Generic[T]):
     total: int
     page: int
     page_size: int
+
+
+class TelemetryConnectivityRead(BaseModel):
+    status: Literal["online", "stale", "offline", "unknown"]
+    last_seen_at: datetime | None
+    freshness_seconds: int | None
+    online_after_seconds: int
+    stale_after_seconds: int
+
+
+class TelemetryGatewayRead(BaseModel):
+    gateway_id: str
+    name: str
+    battery_slot: int
+    organization_id: int
+    assigned_at: datetime | None
+    connectivity: TelemetryConnectivityRead
+
+
+class TelemetrySampleRead(BaseModel):
+    id: int
+    message_id: str
+    source: str
+    protocol: str
+    time_quality: str
+    measured_at: datetime
+    received_at: datetime
+    pack_voltage_v: float
+    pack_current_a: float
+    soc_pct: float
+    soh_pct: float | None
+    capacity_remaining_ah: float
+    capacity_full_ah: float
+    cell_voltages_mv: list[int]
+    cell_min_mv: int
+    cell_max_mv: int
+    cell_avg_mv: float
+    cell_delta_mv: int
+    cell_min_index: int
+    cell_max_index: int
+    temperatures_c: list[float]
+
+
+class TelemetryLatestRead(BaseModel):
+    battery_id: int
+    asset_id: str
+    gateway: TelemetryGatewayRead | None
+    sample: TelemetrySampleRead | None
+    server_time: datetime
+
+
+class TelemetryPackPoint(BaseModel):
+    measured_at: datetime
+    pack_voltage_v: float
+    pack_current_a: float
+    soc_pct: float
+    capacity_remaining_ah: float
+    capacity_full_ah: float
+    cell_min_mv: float
+    cell_max_mv: float
+    cell_avg_mv: float
+    cell_delta_mv: float
+
+
+class TelemetryCellPoint(BaseModel):
+    measured_at: datetime
+    avg_mv: list[float | None]
+    min_mv: list[float | None]
+    max_mv: list[float | None]
+
+
+class TelemetryTemperaturePoint(BaseModel):
+    measured_at: datetime
+    values_c: list[float | None]
+
+
+class TelemetryHistoryRead(BaseModel):
+    battery_id: int
+    asset_id: str
+    range: Literal["1h", "24h", "7d"]
+    from_at: datetime
+    to_at: datetime
+    bucket_seconds: int
+    point_count: int
+    pack: list[TelemetryPackPoint]
+    cells: list[TelemetryCellPoint]
+    temperatures: list[TelemetryTemperaturePoint]
+    generated_at: datetime
 
 
 class StatusCount(BaseModel):

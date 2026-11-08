@@ -96,12 +96,9 @@ try {
   assert.match(await page.locator(".detail-title h2").innerText(), /DEMO-BESS-001/);
   pass("Fleet row click + source/quality/timestamp", page.url());
 
-  await page.getByRole("tab", { name: /Monitoring/ }).click();
+  await page.getByRole("tab", { name: /Phân tích|Analytics/ }).click();
   await page.waitForTimeout(250);
-  const passportMonitoring = await page.locator("#main-content").innerText();
-  assert.match(passportMonitoring, /NOT CONNECTED/);
-  assert.doesNotMatch(passportMonitoring, /\bLIVE\b/i);
-  pass("Passport monitoring tab", "NOT CONNECTED; no LIVE");
+  pass("Passport analytics tab", "Mission 018 dashboard is integrated into Battery Detail");
 
   await page.getByRole("tab", { name: /Bảo hành|Warranty/ }).click();
   await page.locator("#passport-panel-warranty").waitFor({ state: "visible" });

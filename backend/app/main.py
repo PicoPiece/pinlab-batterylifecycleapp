@@ -20,6 +20,7 @@ from app.routers import (
     integrations,
     lifecycle,
     measurements,
+    telemetry,
     users,
 )
 
@@ -94,6 +95,7 @@ app.include_router(organizations.router, prefix="/api/v1")
 app.include_router(assignments.router, prefix="/api/v1")
 app.include_router(batteries.router, prefix="/api/v1")
 app.include_router(measurements.router, prefix="/api/v1")
+app.include_router(telemetry.router, prefix="/api/v1")
 app.include_router(inspections.router, prefix="/api/v1")
 app.include_router(lifecycle.router, prefix="/api/v1")
 app.include_router(attachments.router, prefix="/api/v1")

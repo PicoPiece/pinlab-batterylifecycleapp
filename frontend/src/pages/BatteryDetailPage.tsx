@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api";
 import { useAuth } from "../auth";
@@ -6,6 +6,7 @@ import { useI18n } from "../i18n";
 import { SpecBadge, StatusBadge } from "../components/StatusBadge";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { formatBytes, formatDate, formatDateTime, formatNumber } from "../format";
+const TelemetryDashboard = lazy(() => import("../components/telemetry/TelemetryDashboard").then((module) => ({ default: module.TelemetryDashboard })));
 import type { Attachment, Battery, Inspection, LifecycleEvent, Measurement, MeasurementMetric } from "../types";
 
 const METRICS: MeasurementMetric[] = ["soc", "soh", "voltage", "current", "temperature"];
@@ -16,7 +17,7 @@ const UNITS: Record<MeasurementMetric, string> = {
   current: "A",
   temperature: "°C",
 };
-const TABS = ["overview", "inspections", "lifecycle", "warranty", "monitoring"] as const;
+const TABS = ["overview", "analytics", "inspections", "lifecycle", "warranty"] as const;
 type Tab = (typeof TABS)[number];
 
 export function BatteryDetailPage() {
@@ -377,11 +378,11 @@ export function BatteryDetailPage() {
         </section>
       ) : null}
 
-      {activeTab === "monitoring" ? (
-        <section id="passport-panel-monitoring" role="tabpanel" aria-labelledby="passport-tab-monitoring" className="tab-panel">
-          <div className="monitor-banner"><span className="banner-icon" aria-hidden="true">⌁</span><div><strong>{t("monitoring.previewBanner")}</strong><span>{t("monitoring.previewDetail")}</span></div><span className="badge badge-preview">{t("monitoring.noDevice")}</span></div>
-          <div className="metric-grid">{METRICS.map((metric) => { const item = latest[metric] ?? null; return <div className="metric-card" key={metric}><span className="metric-label">{t(`monitoring.${metric}`)}</span>{item ? <><strong className="metric-value">{formatNumber(item.value, ` ${item.unit}`)}</strong><span className="metric-time">{formatDateTime(item.measured_at)}</span><div className="metric-provenance"><span className={`source-dot source-${item.source}`} />{t(`source.${item.source}`)}<span className="quality-label">{t(`quality.${item.quality}`)}</span></div></> : <><strong className="metric-value metric-empty">{t("monitoring.noData")}</strong><span className="metric-time">{t("monitoring.noDataHint")}</span></>}</div>; })}</div>
-          <div className="button-row"><Link className="btn btn-primary" to={`/monitoring?asset=${battery.id}`}>{t("passport.openMonitoring")}</Link><button className="btn btn-ghost" onClick={() => setTab("warranty")}>{t("passport.openWarranty")}</button></div>
+      {activeTab === "analytics" ? (
+        <section id="passport-panel-analytics" role="tabpanel" aria-labelledby="passport-tab-analytics" className="tab-panel">
+          <Suspense fallback={<Loading label={t("telemetry.loading")} />}>
+            <TelemetryDashboard batteryId={battery.id} />
+          </Suspense>
         </section>
       ) : null}
     </div>

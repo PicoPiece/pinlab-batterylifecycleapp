@@ -17,6 +17,9 @@ import type {
   ProviderInfo,
   Role,
   SecurityAuditEvent,
+  TelemetryHistory,
+  TelemetryLatest,
+  TelemetryRange,
   User,
 } from "./types";
 
@@ -108,6 +111,16 @@ export const api = {
   updateBattery: (id: number, payload: Record<string, unknown>) =>
     request<Battery>(`/batteries/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
   deleteBattery: (id: number) => request<void>(`/batteries/${id}`, { method: "DELETE" }),
+
+  latestTelemetry: (batteryId: number, signal?: AbortSignal) =>
+    request<TelemetryLatest>(`/batteries/${batteryId}/telemetry/latest`, { signal }),
+  telemetryHistory: (batteryId: number, range: TelemetryRange, options: { includeCells?: boolean; signal?: AbortSignal } = {}) => {
+    const includeCells = options.includeCells ?? true;
+    return request<TelemetryHistory>(
+      `/batteries/${batteryId}/telemetry/history?range=${range}&include_cells=${includeCells}`,
+      { signal: options.signal },
+    );
+  },
 
   getMeasurements: (batteryId: number, pageSize = 100) =>
     request<Page<Measurement>>(`/batteries/${batteryId}/measurements?page_size=${pageSize}`),

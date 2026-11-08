@@ -5,6 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    watch: {
+      ignored: ["**/android/**", "**/dist/**", "**/node_modules/**"],
+    },
     proxy: {
       "/api": "http://127.0.0.1:8000",
     },

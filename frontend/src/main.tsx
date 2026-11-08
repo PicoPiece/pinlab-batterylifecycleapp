@@ -8,6 +8,7 @@ import { I18nProvider } from "./i18n";
 import { initializeMobile } from "./mobile";
 import "./styles.css";
 import "./agency.css";
+import "./telemetry.css";
 import "./mobile.css";
 
 const Router = Capacitor.isNativePlatform() ? HashRouter : BrowserRouter;
