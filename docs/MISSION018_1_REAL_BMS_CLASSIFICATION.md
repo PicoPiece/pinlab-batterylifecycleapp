@@ -2,6 +2,7 @@
 
 - **Status:** Development complete; local production-copy verified; **not deployed**.
 - **Branch:** `mission-018.1-real-bms-classification`
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/2 (stacked on `mission-018-battery-analytics`)
 - **Base:** `mission-018-battery-analytics` (Mission 018 Draft PR)
 - **Production context at review:** API/frontend `rc-ac3e599`; Alembic `e5f6a7b8c9d0`; consumer `pinlab-prod-mqtt-ingest` healthy.
 - **Production deployment:** none. No production schema, data, MQTT, Cloudflare or firmware change.

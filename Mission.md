@@ -290,7 +290,7 @@
 - **Status:** **IMPLEMENTED / TESTED / LOCAL PRODUCTION-COPY VERIFIED; NOT DEPLOYED**.
 - **Branch:** `mission-018.1-real-bms-classification`
 - **Evidence:** `docs/MISSION018_1_REAL_BMS_CLASSIFICATION.md`, `docs/MISSION018_1_CLASSIFICATION_INVENTORY.md`, `backend/alembic/versions/f6a7b8c9d0e1_battery_classification.py`, `backend/app/routers/batteries.py`, `backend/app/telemetry.py`, `frontend/src/pages/BatteryDetailPage.tsx`.
-- **Draft PR:** pending creation after commit (stacked on `mission-018-battery-analytics`).
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/2 (stacked on `mission-018-battery-analytics`)
 
 #### Report
 
