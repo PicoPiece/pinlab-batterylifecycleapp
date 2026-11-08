@@ -213,7 +213,7 @@
 3. Existing non-CTO production accounts are unmapped and have no app access.
 4. TEST accounts are labelled TEST and require password reset/change.
 5. Production monitoring/alerting and off-host backup automation are incomplete.
-6. Mission 018 analytics is not deployed to production; BLE, CAN, OTA and flash cache remain out of scope.
+6. Mission 018 analytics and Mission 018.1 classification are development-only; production deployment/migration requires separate CTO approval. BLE, CAN, OTA and flash cache remain out of scope.
 7. Mission 007 has no evidence in available records.
 8. OpenProject portfolio sync is blocked on API permission.
 9. No main merge/push without separate approval.
