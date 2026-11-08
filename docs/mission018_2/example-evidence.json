@@ -1,0 +1,333 @@
+{
+  "_example": true,
+  "_note": "Illustrative output from the isolated local production copy; not a production evidence record.",
+  "schema_version": "diagnostic-evidence-v1",
+  "generated_at": "2026-11-08T17:34:16.517336Z",
+  "battery_id": 17,
+  "asset_id": "PL-APESS-0001",
+  "organization_id": 1,
+  "battery_classification": "real",
+  "gateway_id": "GW-000001",
+  "battery_slot": 0,
+  "range": "1h",
+  "from_at": "2026-11-08T16:34:16.517336Z",
+  "to_at": "2026-11-08T17:34:16.517336Z",
+  "latest_measured_at": "2026-11-08T17:24:05Z",
+  "latest_received_at": "2026-11-08T17:24:07.377519Z",
+  "sample_count": 298,
+  "expected_sample_count": 361,
+  "data_completeness_pct": 82.5,
+  "expected_interval_seconds": 10,
+  "time_quality": [
+    "gateway_ntp"
+  ],
+  "pack": {
+    "pack_voltage": {
+      "count": 298,
+      "min": 52.53,
+      "max": 52.533,
+      "avg": 52.53128187919463,
+      "stddev": 0.0011811113690778723,
+      "unit": "V"
+    },
+    "pack_current": {
+      "count": 298,
+      "min": 0.0,
+      "max": 0.0,
+      "avg": 0.0,
+      "stddev": 0.0,
+      "unit": "A"
+    },
+    "peak_abs_current_a": 0.0,
+    "soc": {
+      "count": 298,
+      "min": 35.42,
+      "max": 35.45,
+      "avg": 35.4258389261745,
+      "stddev": 0.011897467186016648,
+      "unit": "%"
+    },
+    "capacity_remaining_ah": {
+      "count": 298,
+      "min": 35.42,
+      "max": 35.45,
+      "avg": 35.4258389261745,
+      "stddev": 0.011897467186016648,
+      "unit": "Ah"
+    },
+    "capacity_full_ah": {
+      "count": 298,
+      "min": 100.0,
+      "max": 100.0,
+      "avg": 100.0,
+      "stddev": 0.0,
+      "unit": "Ah"
+    },
+    "temperature_min_c": 29.7,
+    "temperature_max_c": 33.3
+  },
+  "cells": [
+    {
+      "cell_index": 1,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3280.0,
+        "avg": 3280.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 2,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3280.0,
+        "avg": 3280.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 3,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3280.0,
+        "avg": 3280.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 4,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3280.0,
+        "avg": 3280.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 5,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3281.0,
+        "max": 3281.0,
+        "avg": 3281.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 6,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3281.0,
+        "avg": 3280.2550335570468,
+        "stddev": 0.4366132655466138,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 7,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3281.0,
+        "max": 3281.0,
+        "avg": 3281.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 8,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3281.0,
+        "max": 3281.0,
+        "avg": 3281.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 9,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3280.0,
+        "avg": 3280.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 10,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3281.0,
+        "avg": 3280.3657718120803,
+        "stddev": 0.48245609169631914,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 11,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3281.0,
+        "max": 3281.0,
+        "avg": 3281.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 12,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3281.0,
+        "avg": 3280.6610738255035,
+        "stddev": 0.4741409257036004,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 13,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3281.0,
+        "max": 3281.0,
+        "avg": 3281.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 14,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3280.0,
+        "avg": 3280.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 15,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3280.0,
+        "max": 3280.0,
+        "avg": 3280.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    },
+    {
+      "cell_index": 16,
+      "cell_voltage": {
+        "count": 298,
+        "min": 3278.0,
+        "max": 3278.0,
+        "avg": 3278.0,
+        "stddev": 0.0,
+        "unit": "mV"
+      }
+    }
+  ],
+  "cell_delta": {
+    "count": 298,
+    "min": 3.0,
+    "max": 3.0,
+    "avg": 3.0,
+    "stddev": 0.0,
+    "unit": "mV"
+  },
+  "temperatures": [
+    {
+      "sensor_index": 1,
+      "temperature": {
+        "count": 298,
+        "min": 32.8,
+        "max": 33.3,
+        "avg": 32.98187919463087,
+        "stddev": 0.14286802144710745,
+        "unit": "°C"
+      }
+    },
+    {
+      "sensor_index": 2,
+      "temperature": {
+        "count": 298,
+        "min": 30.1,
+        "max": 30.2,
+        "avg": 30.1503355704698,
+        "stddev": 0.05008297636649943,
+        "unit": "°C"
+      }
+    },
+    {
+      "sensor_index": 3,
+      "temperature": {
+        "count": 298,
+        "min": 29.7,
+        "max": 30.0,
+        "avg": 29.883557046979867,
+        "stddev": 0.07406952622018473,
+        "unit": "°C"
+      }
+    },
+    {
+      "sensor_index": 4,
+      "temperature": {
+        "count": 298,
+        "min": 30.0,
+        "max": 30.2,
+        "avg": 30.076174496644295,
+        "stddev": 0.05568184412263386,
+        "unit": "°C"
+      }
+    },
+    {
+      "sensor_index": 5,
+      "temperature": {
+        "count": 298,
+        "min": 30.2,
+        "max": 30.5,
+        "avg": 30.381879194630873,
+        "stddev": 0.10153945760738063,
+        "unit": "°C"
+      }
+    }
+  ],
+  "measurement_gaps": [],
+  "gap_threshold_seconds": 30,
+  "provenance": {
+    "source": "REAL_BMS",
+    "protocol": "PYLON_485",
+    "time_quality": [
+      "gateway_ntp"
+    ],
+    "gateway_id": "GW-000001",
+    "battery_slot": 0,
+    "assignment_assigned_at": "2026-11-08T15:47:23Z",
+    "verified_source_only": true
+  },
+  "limitations": [
+    "SOH is unavailable from this BMS; it is not inferred from SOC, voltage or capacity.",
+    "Cell voltage delta is an observation; it is not a battery fault threshold.",
+    "Current polarity has not been certified; charging/discharging is not inferred.",
+    "Raw telemetry retention is 7 days; this evidence covers only the requested bounded range.",
+    "REAL_BMS provenance depends on authenticated Gateway identity, topic ACL, schema and active assignment; it is not cryptographic proof of physical origin.",
+    "Measurement gaps use a 30-second threshold and are inferred from measured_at timestamps."
+  ]
+}

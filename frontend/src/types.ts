@@ -397,3 +397,77 @@ export interface TelemetryHistory {
   temperatures: TelemetryTemperaturePoint[];
   generated_at: string;
 }
+
+export interface DiagnosticStats {
+  count: number;
+  min: number | null;
+  max: number | null;
+  avg: number | null;
+  stddev: number | null;
+  unit: string;
+}
+
+export interface DiagnosticPackStats {
+  pack_voltage: DiagnosticStats;
+  pack_current: DiagnosticStats;
+  peak_abs_current_a: number | null;
+  soc: DiagnosticStats;
+  capacity_remaining_ah: DiagnosticStats;
+  capacity_full_ah: DiagnosticStats;
+  temperature_min_c: number | null;
+  temperature_max_c: number | null;
+}
+
+export interface DiagnosticCellStats {
+  cell_index: number;
+  cell_voltage: DiagnosticStats;
+}
+
+export interface DiagnosticTemperatureStats {
+  sensor_index: number;
+  temperature: DiagnosticStats;
+}
+
+export interface DiagnosticGap {
+  previous_measured_at: string;
+  next_measured_at: string;
+  duration_seconds: number;
+  missing_sample_estimate: number;
+}
+
+export interface DiagnosticEvidence {
+  schema_version: string;
+  generated_at: string;
+  battery_id: number;
+  asset_id: string;
+  organization_id: number | null;
+  battery_classification: BatteryClassification | null;
+  gateway_id: string | null;
+  battery_slot: number | null;
+  range: TelemetryRange;
+  from_at: string;
+  to_at: string;
+  latest_measured_at: string | null;
+  latest_received_at: string | null;
+  sample_count: number;
+  expected_sample_count: number;
+  data_completeness_pct: number;
+  expected_interval_seconds: number;
+  time_quality: string[];
+  pack: DiagnosticPackStats;
+  cells: DiagnosticCellStats[];
+  cell_delta: DiagnosticStats;
+  temperatures: DiagnosticTemperatureStats[];
+  measurement_gaps: DiagnosticGap[];
+  gap_threshold_seconds: number;
+  provenance: {
+    source: string | null;
+    protocol: string | null;
+    time_quality: string[];
+    gateway_id: string | null;
+    battery_slot: number | null;
+    assignment_assigned_at: string | null;
+    verified_source_only: boolean;
+  };
+  limitations: string[];
+}

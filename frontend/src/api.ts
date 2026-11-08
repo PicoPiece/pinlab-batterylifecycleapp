@@ -18,6 +18,7 @@ import type {
   Role,
   SecurityAuditEvent,
   TelemetryHistory,
+  DiagnosticEvidence,
   TelemetryLatest,
   TelemetryRange,
   User,
@@ -126,6 +127,8 @@ export const api = {
       { signal: options.signal },
     );
   },
+  telemetryEvidence: (batteryId: number, range: TelemetryRange, signal?: AbortSignal) =>
+    request<DiagnosticEvidence>(`/batteries/${batteryId}/telemetry/evidence?range=${range}`, { signal }),
 
   getMeasurements: (batteryId: number, pageSize = 100) =>
     request<Page<Measurement>>(`/batteries/${batteryId}/measurements?page_size=${pageSize}`),

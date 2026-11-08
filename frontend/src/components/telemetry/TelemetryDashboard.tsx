@@ -3,6 +3,7 @@ import { ApiError, api } from "../../api";
 import { formatDateTime, formatNumber } from "../../format";
 import { useI18n } from "../../i18n";
 import type {
+  DiagnosticEvidence,
   TelemetryCellPoint,
   TelemetryConnectivityStatus,
   TelemetryHistory,
@@ -17,6 +18,7 @@ import {
   CELL_COLORS,
   PACK_COLORS,
   cellChartData,
+  groupCellValues,
   packChartData,
   rangeLabelKey,
   temperatureChartData,
@@ -30,6 +32,19 @@ const RANGE_OPTIONS: TelemetryRange[] = ["1h", "24h", "7d"];
 
 function isAbort(error: unknown): boolean {
   return typeof error === "object" && error !== null && "name" in error && (error as { name?: string }).name === "AbortError";
+}
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => typeof window !== "undefined" && window.matchMedia(query).matches);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia(query);
+    const onChange = () => setMatches(media.matches);
+    setMatches(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, [query]);
+  return matches;
 }
 
 function connectionLabelKey(status: TelemetryConnectivityStatus): string {
@@ -172,6 +187,60 @@ function CellReadings({
   );
 }
 
+function EvidencePanel({
+  evidence,
+  selectedCell,
+  loading,
+}: {
+  evidence: DiagnosticEvidence | null;
+  selectedCell: number | null;
+  loading: boolean;
+}) {
+  const { t } = useI18n();
+  if (loading && !evidence) {
+    return <div className="telemetry-evidence-panel telemetry-evidence-loading">{t("telemetry.evidenceLoading")}</div>;
+  }
+  if (!evidence) return null;
+  const selected = selectedCell !== null ? evidence.cells.find((item) => item.cell_index === selectedCell + 1) : null;
+  const cellStat = selected?.cell_voltage;
+  const selectedLabel = selectedCell !== null ? t("telemetry.cellNumber", { n: String(selectedCell + 1).padStart(2, "0") }) : t("telemetry.allCellsShort");
+  const cellMins = evidence.cells.map((item) => item.cell_voltage.min).filter((value): value is number => typeof value === "number");
+  const cellMaxs = evidence.cells.map((item) => item.cell_voltage.max).filter((value): value is number => typeof value === "number");
+  const overallCellMin = cellMins.length ? Math.min(...cellMins) : null;
+  const overallCellMax = cellMaxs.length ? Math.max(...cellMaxs) : null;
+  return (
+    <section className="telemetry-evidence-panel" aria-label={t("telemetry.evidence")}>
+      <div className="telemetry-evidence-head">
+        <div>
+          <span className="eyebrow">{t("telemetry.evidence")}</span>
+          <strong>{t("telemetry.evidenceRange", { range: t(rangeLabelKey(evidence.range)) })}</strong>
+        </div>
+        <span className="telemetry-evidence-source">{evidence.provenance.source ?? "—"} · {t("telemetry.samples", { n: evidence.sample_count })}</span>
+      </div>
+      <div className="telemetry-evidence-grid">
+        {cellStat ? (
+          <>
+            <div><span>{selectedLabel} · {t("telemetry.min")}</span><b>{formatNumber(cellStat.min, " mV")}</b></div>
+            <div><span>{selectedLabel} · {t("telemetry.max")}</span><b>{formatNumber(cellStat.max, " mV")}</b></div>
+            <div><span>{selectedLabel} · {t("telemetry.avg")}</span><b>{formatNumber(cellStat.avg, " mV")}</b></div>
+          </>
+        ) : (
+          <>
+            <div><span>{t("telemetry.cellMin")}</span><b>{formatNumber(overallCellMin, " mV")}</b></div>
+            <div><span>{t("telemetry.cellMax")}</span><b>{formatNumber(overallCellMax, " mV")}</b></div>
+            <div><span>{t("telemetry.cellDelta")}</span><b>{formatNumber(evidence.cell_delta.max, " mV")}</b></div>
+          </>
+        )}
+        <div><span>{t("telemetry.peakCurrent")}</span><b>{formatNumber(evidence.pack.peak_abs_current_a, " A")}</b></div>
+        <div><span>{t("telemetry.temperatureRange")}</span><b>{formatNumber(evidence.pack.temperature_min_c, " °C")} – {formatNumber(evidence.pack.temperature_max_c, " °C")}</b></div>
+        <div><span>{t("telemetry.completeness")}</span><b>{formatNumber(evidence.data_completeness_pct, "%")}</b></div>
+        <div><span>{t("telemetry.gaps")}</span><b>{evidence.measurement_gaps.length}</b></div>
+      </div>
+      <p className="telemetry-evidence-hint">{t("telemetry.evidenceHint", { range: t(rangeLabelKey(evidence.range)), samples: evidence.sample_count, source: evidence.provenance.source ?? "—" })}</p>
+    </section>
+  );
+}
+
 function CellControls({
   mode,
   setMode,
@@ -181,6 +250,11 @@ function CellControls({
   setVisibleCells,
   minMaxVisible,
   setMinMaxVisible,
+  relativeMode,
+  setRelativeMode,
+  mobile,
+  pickerOpen,
+  setPickerOpen,
 }: {
   mode: CellMode;
   setMode: (mode: CellMode) => void;
@@ -190,6 +264,11 @@ function CellControls({
   setVisibleCells: (cells: Set<number>) => void;
   minMaxVisible: boolean;
   setMinMaxVisible: (visible: boolean) => void;
+  relativeMode: boolean;
+  setRelativeMode: (relative: boolean) => void;
+  mobile: boolean;
+  pickerOpen: boolean;
+  setPickerOpen: (open: boolean) => void;
 }) {
   const { t } = useI18n();
   const toggleCell = (index: number) => {
@@ -209,6 +288,16 @@ function CellControls({
         {t("telemetry.minMax")}
       </button>
       {mode !== "summary" ? (
+        <button type="button" className={`telemetry-toggle${relativeMode ? " active" : ""}`} aria-pressed={relativeMode} onClick={() => setRelativeMode(!relativeMode)}>
+          {t("telemetry.relativeMode")}
+        </button>
+      ) : null}
+      {mode !== "summary" && mobile ? (
+        <button type="button" className="telemetry-toggle telemetry-cell-picker-toggle" aria-expanded={pickerOpen} onClick={() => setPickerOpen(!pickerOpen)}>
+          {t("telemetry.selectCellsToggle", { n: visibleCells.size })}
+        </button>
+      ) : null}
+      {mode !== "summary" && (!mobile || pickerOpen) ? (
         <div className="telemetry-cell-checkboxes">
           <button type="button" className="telemetry-text-button" onClick={() => setVisibleCells(new Set(Array.from({ length: 16 }, (_, index) => index)))}>{t("telemetry.showAll")}</button>
           <button type="button" className="telemetry-text-button" onClick={() => setVisibleCells(new Set())}>{t("telemetry.hideAll")}</button>
@@ -235,6 +324,8 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
   const [latestLoading, setLatestLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [cellLoading, setCellLoading] = useState(false);
+  const [evidence, setEvidence] = useState<DiagnosticEvidence | null>(null);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
   const [latestError, setLatestError] = useState("");
   const [historyError, setHistoryError] = useState("");
   const [cellError, setCellError] = useState("");
@@ -242,11 +333,17 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
   const [cellMode, setCellMode] = useState<CellMode>("summary");
   const [visibleCells, setVisibleCells] = useState<Set<number>>(new Set(Array.from({ length: 16 }, (_, index) => index)));
   const [minMaxVisible, setMinMaxVisible] = useState(true);
+  const [relativeMode, setRelativeMode] = useState(false);
+  const [cellPickerOpen, setCellPickerOpen] = useState(false);
+  const [mobileOverviewChart, setMobileOverviewChart] = useState<"soc" | "voltage" | "current" | "delta">("soc");
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const [historyPanel, setHistoryPanel] = useState<HistoryPanel>("pack");
   const latestAbort = useRef<AbortController | null>(null);
   const historyAbort = useRef<AbortController | null>(null);
   const cellAbort = useRef<AbortController | null>(null);
   const cellCacheKey = useRef<string | null>(null);
+  const evidenceAbort = useRef<AbortController | null>(null);
+  const evidenceCacheKey = useRef<string | null>(null);
 
   const loadLatest = useCallback(async (initial = false) => {
     latestAbort.current?.abort();
@@ -286,7 +383,9 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
     historyAbort.current?.abort();
     setHistory(null);
     setCellHistory(null);
+    setEvidence(null);
     cellCacheKey.current = null;
+    evidenceCacheKey.current = null;
     setHistoryLoading(true);
     setHistoryError("");
     const controller = new AbortController();
@@ -330,6 +429,33 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
     return () => controller.abort();
   }, [batteryId, range, needCells, cellHistory, t]);
 
+  const needEvidence = tab === "cells" || tab === "history";
+
+  useEffect(() => {
+    if (!needEvidence) {
+      setEvidenceLoading(false);
+      return;
+    }
+    const cacheKey = `${batteryId}:${range}`;
+    if (evidence && evidenceCacheKey.current === cacheKey) return;
+    evidenceAbort.current?.abort();
+    const controller = new AbortController();
+    evidenceAbort.current = controller;
+    setEvidenceLoading(true);
+    api.telemetryEvidence(batteryId, range, controller.signal)
+      .then((response) => {
+        setEvidence(response);
+        evidenceCacheKey.current = cacheKey;
+      })
+      .catch(() => {
+        // Evidence is an enhancement; charts remain usable if this request fails.
+      })
+      .finally(() => {
+        if (evidenceAbort.current === controller) setEvidenceLoading(false);
+      });
+    return () => controller.abort();
+  }, [batteryId, range, needEvidence, evidence]);
+
   const sample = latest?.sample ?? null;
   const connectivity = latest?.gateway?.connectivity.status ?? "unknown";
   const stats = sampleMinMax(sample);
@@ -345,21 +471,35 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
     { key: "cellAvg", name: t("telemetry.avg"), color: PACK_COLORS.cellAvg },
   ].filter((item) => minMaxVisible || item.key === "cellAvg");
 
+  const cellKeys = useMemo(
+    () => Array.from({ length: 16 }, (_, index) => index).filter((index) => cellMode === "all" || visibleCells.has(index)),
+    [cellMode, visibleCells],
+  );
+
   const cellSeries: SeriesSpec[] = useMemo(() => {
-    const series: SeriesSpec[] = Array.from({ length: 16 }, (_, index) => ({
-      key: `c${index + 1}`,
+    const visible = Array.from({ length: 16 }, (_, index) => index)
+      .filter((index) => cellMode === "all" || visibleCells.has(index));
+    const keyFor = (index: number) => `${relativeMode ? "r" : "c"}${index + 1}`;
+    const base: SeriesSpec[] = visible.map((index) => ({
+      key: keyFor(index),
       name: t("telemetry.cell", { n: String(index + 1).padStart(2, "0") }),
       color: CELL_COLORS[index],
-      width: selectedCell === index ? 2.6 : 1.2,
-    })).filter((_, index) => cellMode === "all" || visibleCells.has(index));
-    if (selectedCell !== null && minMaxVisible && cellMode !== "summary") {
-      series.push(
-        { key: `min${selectedCell + 1}`, name: `${t("telemetry.min")} C${selectedCell + 1}`, color: "#64748b", dashed: true, width: 1.2 },
-        { key: `max${selectedCell + 1}`, name: `${t("telemetry.max")} C${selectedCell + 1}`, color: "#7c3aed", dashed: true, width: 1.2 },
-      );
-    }
-    return series;
-  }, [cellMode, minMaxVisible, selectedCell, t, visibleCells]);
+      width: selectedCell === index ? 3.2 : 1.2,
+      opacity: selectedCell === null || selectedCell === index ? 1 : 0.22,
+    }));
+    const highlighted = selectedCell !== null ? base.find((_, index) => visible[index] === selectedCell) : undefined;
+    const others = base.filter((_, index) => visible[index] !== selectedCell);
+    const selectedVisible = selectedCell !== null && visible.includes(selectedCell);
+    const extrema: SeriesSpec[] = selectedVisible && minMaxVisible && !relativeMode
+      ? [
+          { key: `min${selectedCell + 1}`, name: `${t("telemetry.min")} C${selectedCell + 1}`, color: "#64748b", dashed: true, width: 1.2, opacity: 0.62 },
+          { key: `max${selectedCell + 1}`, name: `${t("telemetry.max")} C${selectedCell + 1}`, color: "#7c3aed", dashed: true, width: 1.2, opacity: 0.62 },
+        ]
+      : [];
+    // Recharts renders the children in reverse paint order; the selected
+    // series is placed first in the data order so it is painted last/on top.
+    return highlighted ? [highlighted, ...extrema, ...others] : base;
+  }, [cellMode, minMaxVisible, relativeMode, selectedCell, t, visibleCells]);
 
   const temperatureSeries: SeriesSpec[] = Array.from({ length: 5 }, (_, index) => ({
     key: `t${index + 1}`,
@@ -369,8 +509,12 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
 
   const selectCell = (index: number) => {
     setSelectedCell(index);
-    setCellMode("custom");
-    setVisibleCells(new Set([index]));
+    if (cellMode === "summary") setCellMode("all");
+    setVisibleCells((current) => {
+      const next = new Set(current);
+      next.add(index);
+      return next;
+    });
   };
 
   const renderLatestError = latestError ? <ErrorState message={latestError} /> : null;
@@ -434,50 +578,46 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
           {historyLoading && !history ? <div className="state-box" role="status"><div className="spinner" /><span>{t("telemetry.loading")}</span></div> : null}
           {renderHistoryError}
           {history ? (
-            <div className="telemetry-chart-grid">
-              <TelemetryChart
-                title={t("telemetry.socHistory")}
-                unit="%"
-                data={packData}
-                range={range}
-                series={[{ key: "soc", name: t("telemetry.soc"), color: PACK_COLORS.soc }]}
-                syncId="telemetry-overview"
-                brush
-                footer={<span>{pointLabel}{bucketLabel ? ` · ${bucketLabel}` : ""}</span>}
-                showLegend={false}
-              />
-              <TelemetryChart
-                title={t("telemetry.voltageHistory")}
-                unit="V"
-                data={packData}
-                range={range}
-                series={[{ key: "voltage", name: t("telemetry.packVoltage"), color: PACK_COLORS.voltage }]}
-                syncId="telemetry-overview"
-                brush
-                showLegend={false}
-              />
-              <TelemetryChart
-                title={t("telemetry.currentHistory")}
-                unit="A"
-                data={packData}
-                range={range}
-                series={[{ key: "current", name: t("telemetry.packCurrent"), color: PACK_COLORS.current }]}
-                syncId="telemetry-overview"
-                brush
-                showLegend={false}
-              />
-              <TelemetryChart
-                title={t("telemetry.deltaHistory")}
-                unit="mV"
-                data={packData}
-                range={range}
-                series={[{ key: "delta", name: t("telemetry.cellDelta"), color: PACK_COLORS.delta }]}
-                syncId="telemetry-overview"
-                brush
-                footer={<span>{t("telemetry.hint")}</span>}
-                showLegend={false}
-              />
-            </div>
+            <>
+              {isMobile ? (
+                <div className="telemetry-mobile-chart-tabs" role="tablist" aria-label={t("telemetry.overview")}>
+                  {(["soc", "voltage", "current", "delta"] as const).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="tab"
+                      aria-selected={mobileOverviewChart === key}
+                      className={mobileOverviewChart === key ? "active" : ""}
+                      onClick={() => setMobileOverviewChart(key)}
+                    >
+                      {key === "soc" ? t("telemetry.soc") : key === "voltage" ? t("telemetry.packVoltage") : key === "current" ? t("telemetry.packCurrent") : t("telemetry.cellDelta")}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <div className="telemetry-chart-grid">
+                {[
+                  {
+                    key: "soc" as const,
+                    chart: <TelemetryChart title={t("telemetry.socHistory")} unit="%" data={packData} range={range} series={[{ key: "soc", name: t("telemetry.soc"), color: PACK_COLORS.soc }]} syncId="telemetry-overview" brush footer={<span>{pointLabel}{bucketLabel ? ` · ${bucketLabel}` : ""}</span>} showLegend={false} />,
+                  },
+                  {
+                    key: "voltage" as const,
+                    chart: <TelemetryChart title={t("telemetry.voltageHistory")} unit="V" data={packData} range={range} series={[{ key: "voltage", name: t("telemetry.packVoltage"), color: PACK_COLORS.voltage }]} syncId="telemetry-overview" brush showLegend={false} />,
+                  },
+                  {
+                    key: "current" as const,
+                    chart: <TelemetryChart title={t("telemetry.currentHistory")} unit="A" data={packData} range={range} series={[{ key: "current", name: t("telemetry.packCurrent"), color: PACK_COLORS.current }]} syncId="telemetry-overview" brush showLegend={false} />,
+                  },
+                  {
+                    key: "delta" as const,
+                    chart: <TelemetryChart title={t("telemetry.deltaHistory")} unit="mV" data={packData} range={range} series={[{ key: "delta", name: t("telemetry.cellDelta"), color: PACK_COLORS.delta }]} syncId="telemetry-overview" brush footer={<span>{t("telemetry.hint")}</span>} showLegend={false} />,
+                  },
+                ].filter((item) => !isMobile || item.key === mobileOverviewChart).map((item) => (
+                  <div className="telemetry-mobile-chart" key={item.key}>{item.chart}</div>
+                ))}
+              </div>
+            </>
           ) : null}
         </section>
       ) : null}
@@ -500,8 +640,22 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
               setVisibleCells={setVisibleCells}
               minMaxVisible={minMaxVisible}
               setMinMaxVisible={setMinMaxVisible}
+              relativeMode={relativeMode}
+              setRelativeMode={setRelativeMode}
+              mobile={isMobile}
+              pickerOpen={cellPickerOpen}
+              setPickerOpen={setCellPickerOpen}
             />
           </div>
+          {cellMode !== "summary" && sample ? (
+            <p className="telemetry-overlap-note">
+              {t("telemetry.overlapExplanation", {
+                levels: groupCellValues(sample.cell_voltages_mv).length,
+                total: sample.cell_voltages_mv.length,
+              })}
+            </p>
+          ) : null}
+          <EvidencePanel evidence={evidence} selectedCell={selectedCell} loading={evidenceLoading} />
           <div className="telemetry-cell-charts">
             {cellMode === "summary" || cellHistory ? (
               <TelemetryChart
@@ -516,6 +670,9 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
                 height={310}
                 cellTooltip={cellMode !== "summary"}
                 selectedCell={selectedCell}
+                cellKeys={cellKeys}
+                relativeMode={relativeMode}
+                footer={<span>{relativeMode ? t("telemetry.relativeHint") : t("telemetry.hint")}</span>}
                 showLegend={cellMode === "summary"}
               />
             ) : null}
@@ -546,6 +703,7 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
               </button>
             ))}
           </div>
+          <EvidencePanel evidence={evidence} selectedCell={selectedCell} loading={evidenceLoading} />
           {historyLoading && !history ? <div className="state-box" role="status"><div className="spinner" /><span>{t("telemetry.loading")}</span></div> : null}
           {renderHistoryError}
           {history ? (
@@ -590,6 +748,7 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
                         brush
                         cellTooltip
                         selectedCell={selectedCell}
+                        cellKeys={selectedCell !== null ? [selectedCell] : [0]}
                         footer={<span>{t("telemetry.clickCell")}</span>}
                         showLegend={false}
                       />

@@ -109,10 +109,11 @@ try {
 
   await page.locator(".telemetry-cell-button").first().click();
   await page.waitForTimeout(500);
-  assert.match(await page.locator(".telemetry-cell-controls .telemetry-segment button.active").innerText(), /Chọn cell|Select cells/);
-  assert.equal(await page.locator(".telemetry-cell-check input:checked").count(), 1);
+  assert.match(await page.locator(".telemetry-cell-controls .telemetry-segment button.active").innerText(), /Tất cả 16 cell|All 16 cells/);
+  assert.equal(await page.locator(".telemetry-cell-check input:checked").count(), 16);
+  assert.equal(await page.locator(".telemetry-cell-button.is-selected").count(), 1);
   await page.screenshot({ path: path.join(screenshotDir, "desktop-cell-selected.png"), fullPage: true });
-  pass("Cell click selects history", "Cell 01 custom series");
+  pass("Cell click highlights history", "Cell 01 highlighted above all 16 series");
 
   await page.locator(".telemetry-primary-tabs button").nth(2).click();
   await page.waitForTimeout(250);

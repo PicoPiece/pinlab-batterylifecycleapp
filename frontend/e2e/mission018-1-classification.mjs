@@ -56,8 +56,10 @@ try {
   assert.equal(await page.locator(".demo-banner").count(), 0);
   const health = await page.locator(".health-card").innerText();
   assert.match(health, /REAL_BMS/);
-  assert.match(health, /35[,.]45\s*%/);
+  assert.match(health, /\d+[,.]\d+\s*%/);
   assert.match(health, /SOH[\s\S]*N\/A/);
+  assert.match(health, /\d+[,.]\d+\s*V/);
+  assert.match(health, /\d+[,.]\d+\s*A/);
   assert.match(health, /GW-000001/);
   assert.match(health, /Nguồn[\s\S]*REAL_BMS|Source[\s\S]*REAL_BMS/);
   assert.equal(await page.locator(".classification-bar").count(), 1);

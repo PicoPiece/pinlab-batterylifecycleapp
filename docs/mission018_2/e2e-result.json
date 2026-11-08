@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-11-08T17:36:40.086Z",
+  "base": "http://127.0.0.1:5181",
+  "results": [
+    {
+      "name": "All 16 rendered series",
+      "status": "PASS",
+      "detail": "16 cell lines + 1 delta chart; overlap note visible"
+    },
+    {
+      "name": "Cell highlight keeps all 16 series",
+      "status": "PASS",
+      "detail": "Cell 01 selected; 16 lines remain"
+    },
+    {
+      "name": "Synchronized cell tooltip",
+      "status": "PASS",
+      "detail": "all visible cell IDs and duplicate-value explanation shown"
+    },
+    {
+      "name": "Relative voltage mode",
+      "status": "PASS",
+      "detail": "Δ chart + actual voltage tooltip"
+    },
+    {
+      "name": "Mobile cell usability",
+      "status": "PASS",
+      "detail": "360/390/430px, 0 horizontal overflow, one chart"
+    }
+  ],
+  "console_errors": [],
+  "evidence": {
+    "mainLineCount": 16,
+    "allLineCount": 17
+  }
+}

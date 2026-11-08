@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:e2e": "node e2e/agency-preview.mjs",
     "test:e2e:mission018": "node e2e/mission018-analytics.mjs",
-    "test:e2e:mission018-1": "node e2e/mission018-1-classification.mjs"
+    "test:e2e:mission018-1": "node e2e/mission018-1-classification.mjs",
+    "test:e2e:mission018-2": "node e2e/mission018-2-cell-chart.mjs"
   },
   "dependencies": {
     "@capacitor/android": "8.6.0",
