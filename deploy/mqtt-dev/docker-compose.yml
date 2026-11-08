@@ -1,0 +1,91 @@
+name: pinlab-mqtt-dev
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pinlab_mqtt}
+      POSTGRES_USER: ${POSTGRES_USER:-pinlab_mqtt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in deploy/mqtt-dev/.env}
+    volumes:
+      - mqtt_db:/var/lib/postgresql/data
+    networks: [mqttnet]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  broker:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1883:1883"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./acl:/mosquitto/config/acl:ro
+      - ./secrets/passwd:/mosquitto/config/passwd:ro
+      - mosquitto_data:/mosquitto/data
+    networks: [mqttnet]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 1883 && nc -z 127.0.0.1 9001"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+  ingest:
+    build:
+      context: ../../backend
+    command: python -m app.mqtt_consumer
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-pinlab_mqtt}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-pinlab_mqtt}
+      SECRET_KEY: mqtt-dev-only-secret-32-bytes-minimum
+      ENVIRONMENT: development
+      COOKIE_SECURE: "false"
+      MQTT_BROKER_HOST: broker
+      MQTT_BROKER_PORT: "1883"
+      MQTT_TRANSPORT: tcp
+      MQTT_CLIENT_ID: pinlab-ingest-dev
+      MQTT_USERNAME: ${MQTT_INGEST_USER:-pinlab-ingest}
+      MQTT_PASSWORD: ${MQTT_INGEST_PASSWORD:?set MQTT_INGEST_PASSWORD}
+      MQTT_ALLOW_SIMULATED: ${MQTT_ALLOW_SIMULATED:-true}
+      TELEMETRY_RETENTION_DAYS: "7"
+    depends_on:
+      db: {condition: service_healthy}
+      broker: {condition: service_started}
+    networks: [mqttnet]
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q app.mqtt_consumer /proc/1/cmdline"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+
+  retention:
+    profiles: ["tools"]
+    build:
+      context: ../../backend
+    command: python -m app.retention --days 7
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-pinlab_mqtt}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-pinlab_mqtt}
+      SECRET_KEY: mqtt-dev-only-secret-32-bytes-minimum
+      ENVIRONMENT: development
+    depends_on:
+      db: {condition: service_healthy}
+    networks: [mqttnet]
+
+volumes:
+  mqtt_db:
+  mosquitto_data:
+
+networks:
+  mqttnet:
+    name: pinlab-mqtt-dev-net

@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Enum as SAEnum,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -269,6 +270,93 @@ class BatteryAssignment(Base):
     @property
     def battery_asset_id(self) -> str:
         return self.battery.asset_id
+
+
+class Gateway(Base):
+    __tablename__ = "gateways"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gateway_id: Mapped[str] = mapped_column(String(80), unique=True, index=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    organization_id: Mapped[int] = mapped_column(
+        ForeignKey("organizations.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
+    )
+
+    organization: Mapped[Organization] = relationship()
+    assignments: Mapped[list["GatewayBatteryAssignment"]] = relationship(
+        back_populates="gateway", cascade="all, delete-orphan", passive_deletes=True
+    )
+
+
+class GatewayBatteryAssignment(Base):
+    __tablename__ = "gateway_battery_assignments"
+    __table_args__ = (
+        UniqueConstraint("gateway_id", "battery_slot", "assigned_at", name="uq_gateway_slot_assigned_at"),
+        Index("ix_gateway_battery_assignment_lookup", "gateway_id", "battery_slot", "assigned_at", "unassigned_at"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gateway_id: Mapped[int] = mapped_column(
+        ForeignKey("gateways.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    battery_slot: Mapped[int] = mapped_column(Integer, nullable=False)
+    battery_id: Mapped[int] = mapped_column(
+        ForeignKey("batteries.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    unassigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    gateway: Mapped[Gateway] = relationship(back_populates="assignments")
+    battery: Mapped[Battery] = relationship()
+
+
+class TelemetrySample(Base):
+    __tablename__ = "telemetry_samples"
+    __table_args__ = (
+        UniqueConstraint("gateway_id", "message_id", name="uq_telemetry_gateway_message"),
+        Index("ix_telemetry_battery_measured_at", "battery_id", "measured_at"),
+        Index("ix_telemetry_org_measured_at", "organization_id", "measured_at"),
+        Index("ix_telemetry_measured_at", "measured_at"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gateway_id: Mapped[int] = mapped_column(
+        ForeignKey("gateways.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    battery_id: Mapped[int] = mapped_column(
+        ForeignKey("batteries.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    organization_id: Mapped[int] = mapped_column(
+        ForeignKey("organizations.id", ondelete="RESTRICT"), index=True, nullable=False
+    )
+    message_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False)
+    battery_slot: Mapped[int] = mapped_column(Integer, nullable=False)
+    measured_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+    time_quality: Mapped[str] = mapped_column(String(32), nullable=False)
+    source: Mapped[str] = mapped_column(String(32), nullable=False)
+    protocol: Mapped[str] = mapped_column(String(32), nullable=False)
+    pack_voltage_v: Mapped[float] = mapped_column(Numeric(10, 3), nullable=False)
+    pack_current_a: Mapped[float] = mapped_column(Numeric(10, 3), nullable=False)
+    soc_pct: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
+    soh_pct: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)
+    capacity_remaining_ah: Mapped[float] = mapped_column(Numeric(10, 3), nullable=False)
+    capacity_full_ah: Mapped[float] = mapped_column(Numeric(10, 3), nullable=False)
+    cell_voltages_mv: Mapped[list[int]] = mapped_column(JSON, nullable=False)
+    temperatures_c: Mapped[list[float]] = mapped_column(JSON, nullable=False)
+    raw_payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
+
+    gateway: Mapped[Gateway] = relationship()
+    battery: Mapped[Battery] = relationship()
+    organization: Mapped[Organization] = relationship()
 
 
 class SecurityAuditEvent(Base):

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "gateway_id": "GW-000001",
+  "battery_slot": 0,
+  "message_id": "dev-sim-20261108T000000Z-0001",
+  "measured_at": "2026-11-08T00:00:00Z",
+  "time_quality": "unknown",
+  "source": "SIMULATED",
+  "protocol": "PYLON_485",
+  "pack_voltage_v": 51.2,
+  "pack_current_a": -10.5,
+  "soc_pct": 78.0,
+  "soh_pct": null,
+  "capacity_remaining_ah": 78.0,
+  "capacity_full_ah": 100.0,
+  "cell_voltages_mv": [3200,3200,3200,3200,3200,3200,3200,3200,3200,3200,3200,3200,3200,3200,3200,3200],
+  "temperatures_c": [25.0, 25.0, 25.0, 25.0]
+}

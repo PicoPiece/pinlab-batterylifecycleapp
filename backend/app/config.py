@@ -19,6 +19,17 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     admin_email: str | None = None
     admin_password: str | None = None
+    mqtt_broker_host: str = "127.0.0.1"
+    mqtt_broker_port: int = 1883
+    mqtt_websocket_path: str = "/mqtt"
+    mqtt_client_id: str = "pinlab-ingest-dev"
+    mqtt_username: str | None = None
+    mqtt_password: str | None = None
+    mqtt_transport: str = "tcp"
+    mqtt_tls: bool = False
+    mqtt_allow_simulated: bool = False
+    mqtt_max_payload_bytes: int = 65536
+    telemetry_retention_days: int = 7
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -230,3 +230,14 @@
   `ProjectManagement/docs/OPENPROJECT_PORTFOLIO_SYNC_2026-10-31.md`.
 - APK: `artifacts/android/PinLab-BatteryLifecycle-0.4.0-internal-test-debug.apk`
 - Manifest: `artifacts/android/PinLab-BatteryLifecycle-0.4.0-internal-test-manifest.json`
+
+### Mission 017 — Server MQTT Broker, Ingestion & PostgreSQL
+
+- **Project:** BatteryLifecycleApp / IoT Gateway
+- **Scope:** Read-only infrastructure audit, isolated development Mosquitto broker, MQTT contract v1, manual gateway/battery mapping, ingestion consumer, raw telemetry schema, 7-day retention job and synthetic tests.
+- **Status:** **IMPLEMENTED / TESTED IN ISOLATED DEVELOPMENT; NOT PRODUCTION-DEPLOYED**.
+- **Branch:** `mission-017-server-mqtt`
+- **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`.
+- **Tests:** Backend 44/44 PASS; dev Mosquitto auth/ACL, WebSocket QoS 1, PostgreSQL persistence/dedup, broker/consumer reconnect and retention tests PASS.
+- **Blocked:** Public WSS endpoint `wss://mqtt.pinlab.picopiece.com/mqtt` is not configured; DNS/tunnel/firewall changes require CTO approval. Real ESP32 telemetry is not tested by this mission.
+- **Next:** CTO approves public WSS route/access policy; ESP32 Agent receives schema, broker URI, credentials via secure channel and registered Gateway ID.
