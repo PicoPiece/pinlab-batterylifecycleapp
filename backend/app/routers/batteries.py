@@ -9,6 +9,7 @@ from app.models import (
     Attachment,
     Battery,
     BatteryAssignment,
+    BatteryClassification,
     BatteryStatus,
     Inspection,
     LifecycleEventType,
@@ -19,6 +20,7 @@ from app.models import (
     User,
 )
 from app.schemas import (
+    BatteryClassificationUpdate,
     BatteryCreate,
     BatteryLatestMeasurements,
     BatteryPortfolioItem,
@@ -242,6 +244,44 @@ def get_battery(
     ctx: AccessContext = Depends(get_access_context),
 ) -> Battery:
     return get_battery_or_404(db, battery_id, ctx)
+
+
+@router.patch("/{battery_id}/classification", response_model=BatteryRead)
+def set_battery_classification(
+    battery_id: int,
+    payload: BatteryClassificationUpdate,
+    db: Session = Depends(get_db),
+    ctx: AccessContext = Depends(get_access_context),
+) -> Battery:
+    """Assign Passport identity independently of telemetry provenance.
+
+    Only PinLab managers/super-admins may classify or reclassify a Passport.
+    This endpoint never promotes a Passport based on received telemetry.
+    """
+    battery = get_battery_for_write_or_404(db, battery_id, ctx)
+    if not (ctx.is_super_admin or ctx.is_manager):
+        raise forbid()
+    old = battery.classification
+    if old == payload.classification:
+        return battery
+    battery.classification = payload.classification
+    battery.updated_by_id = ctx.user.id
+    record_security_event(
+        db,
+        actor_id=ctx.user.id,
+        action="battery.classification.update",
+        target_type="battery",
+        target_id=battery.id,
+        organization_id=battery.organization_id,
+        metadata={
+            "asset_id": battery.asset_id,
+            "from": old.value if old else None,
+            "to": payload.classification.value,
+        },
+    )
+    db.commit()
+    db.refresh(battery)
+    return battery
 
 
 @router.patch("/{battery_id}", response_model=BatteryRead)

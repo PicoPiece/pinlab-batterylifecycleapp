@@ -352,7 +352,11 @@ export function DashboardPage() {
 
       <div className="demo-disclosure">
         <span aria-hidden="true">i</span>
-        {t("dashboard.demoDisclosure", { n: data.total_batteries })}
+        {t("dashboard.classificationDisclosure", {
+          real: data.real_batteries,
+          demo: data.demo_batteries,
+          unclassified: data.unclassified_batteries,
+        })}
       </div>
     </div>
   );

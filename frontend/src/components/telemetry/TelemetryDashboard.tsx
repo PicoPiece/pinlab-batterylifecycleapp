@@ -425,6 +425,9 @@ export function TelemetryDashboard({ batteryId }: { batteryId: number }) {
         {connectivity === "stale" || connectivity === "offline" ? <span className="telemetry-stale-note">{t(`telemetry.${connectivity}Hint`)}</span> : null}
       </div>
 
+      {latest?.battery_classification === "demo" && sample ? <div className="guardrail-note"><span aria-hidden="true">!</span><p>{t("passport.demoRealWarning")}</p></div> : null}
+      {!sample && latest?.latest_any_source === "SIMULATED" ? <div className="guardrail-note"><span aria-hidden="true">!</span><p>{t("passport.simulatedIncoming")}</p></div> : null}
+
       {tab === "overview" ? (
         <section className="telemetry-tab-panel" role="tabpanel">
           {!sample ? <EmptyState title={t("telemetry.noTelemetry")} detail={t("telemetry.noTelemetryHint")} /> : null}

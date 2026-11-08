@@ -1,6 +1,6 @@
 from sqlalchemy import func, select
 
-from app.models import Battery
+from app.models import Battery, BatteryClassification
 from app.seed import seed_demo
 
 
@@ -24,6 +24,9 @@ def test_seed_is_idempotent_and_preserves_existing_assets(db, admin):
     seed_demo(db, admin)
     count_once = db.scalar(select(func.count()).select_from(Battery))
     assert count_once == 12
+    seeded_battery = db.scalar(select(Battery).where(Battery.asset_id == "DEMO-LFP-002"))
+    assert seeded_battery is not None
+    assert seeded_battery.classification == BatteryClassification.demo
     for asset_id, notes in existing_rows:
         battery = db.scalar(select(Battery).where(Battery.asset_id == asset_id))
         assert battery is not None

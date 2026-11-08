@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.authorization import AccessContext, get_access_context
 from app.database import get_db
-from app.models import Battery, BatteryStatus, Inspection, LifecycleEvent, Measurement, MeasurementMetric, User
+from app.models import Battery, BatteryClassification, BatteryStatus, Inspection, LifecycleEvent, Measurement, MeasurementMetric, User
 from app.schemas import (
     AttentionBattery,
     BucketCount,
@@ -55,6 +55,9 @@ def dashboard(
 
     active_batteries = list(db.scalars(select(Battery).where(active_filter)).all())
     active_ids = [battery.id for battery in active_batteries]
+    real_batteries = sum(1 for battery in active_batteries if battery.classification == BatteryClassification.real)
+    demo_batteries = sum(1 for battery in active_batteries if battery.classification == BatteryClassification.demo)
+    unclassified_batteries = sum(1 for battery in active_batteries if battery.classification is None)
     latest: dict[tuple[int, MeasurementMetric], Measurement] = {}
     if active_ids:
         measurements = db.scalars(
@@ -205,6 +208,9 @@ def dashboard(
 
     return DashboardSummary(
         total_batteries=total,
+        real_batteries=real_batteries,
+        demo_batteries=demo_batteries,
+        unclassified_batteries=unclassified_batteries,
         by_status=by_status,
         soc_available=len(soc_values),
         soh_available=len(soh_values),

@@ -579,3 +579,88 @@
 .telemetry-history-cell-select .field {
   width: min(210px, 100%);
 }
+
+/* Mission 018.1 — backend-authoritative Passport classification */
+.classification-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+}
+
+.classification-field {
+  width: min(240px, 100%);
+}
+
+.badge-classification-real {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.badge-classification-demo {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+}
+
+.badge-classification-unclassified {
+  background: #f2f4f7;
+  color: #475467;
+}
+
+.workspace-dot-production { background: #2dd4bf; box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.14); }
+.workspace-dot-mixed { background: #fbbf24; box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.14); }
+.workspace-dot-demo { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14); }
+.workspace-dot-unclassified { background: #98a2b3; }
+
+.telemetry-health-temps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 9px;
+}
+
+.telemetry-health-temps span {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 0.56rem;
+}
+
+.telemetry-health-temps b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.telemetry-health-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.58rem;
+}
+
+.telemetry-health-meta b {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.telemetry-health-meta .text-link {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .classification-bar { align-items: stretch; flex-direction: column; }
+  .classification-field { width: 100%; }
+  .health-card .card-head { align-items: flex-start; flex-wrap: wrap; }
+  .telemetry-health-meta .text-link { margin-left: 0; }
+}

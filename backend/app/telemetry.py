@@ -162,10 +162,18 @@ def latest_telemetry(
         .order_by(TelemetrySample.measured_at.desc(), TelemetrySample.id.desc())
         .limit(1)
     )
+    latest_any = db.scalar(
+        select(TelemetrySample)
+        .where(TelemetrySample.battery_id == battery.id)
+        .order_by(TelemetrySample.measured_at.desc(), TelemetrySample.id.desc())
+        .limit(1)
+    )
+    # Connectivity is based on server receive time for any authenticated
+    # telemetry source; the UI separately labels whether the latest values are
+    # verified REAL_BMS or merely simulated.
     last_seen_at = db.scalar(
         select(func.max(TelemetrySample.received_at)).where(
-            TelemetrySample.battery_id == battery.id,
-            TelemetrySample.source == VERIFIED_SOURCE,
+            TelemetrySample.battery_id == battery.id
         )
     )
     assignment = _current_assignment(db, battery.id)
@@ -195,6 +203,11 @@ def latest_telemetry(
     return TelemetryLatestRead(
         battery_id=battery.id,
         asset_id=battery.asset_id,
+        battery_classification=battery.classification,
+        has_real_telemetry=sample is not None,
+        telemetry_source=sample.source if sample is not None else None,
+        latest_any_source=latest_any.source if latest_any is not None else None,
+        latest_any_at=_utc(latest_any.measured_at) if latest_any is not None else None,
         gateway=gateway_read,
         sample=_sample_read(sample) if sample is not None else None,
         server_time=current_now,

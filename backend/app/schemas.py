@@ -4,6 +4,7 @@ from typing import Any, Generic, Literal, TypeVar
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models import (
+    BatteryClassification,
     BatteryStatus,
     InspectionResult,
     LifecycleEventType,
@@ -127,8 +128,13 @@ class BatteryUpdate(BaseModel):
     organization_id: int | None = None
 
 
+class BatteryClassificationUpdate(BaseModel):
+    classification: BatteryClassification
+
+
 class BatteryRead(BatteryBase, ORMModel):
     id: int
+    classification: BatteryClassification | None = None
     is_deleted: bool
     created_at: datetime
     updated_at: datetime
@@ -364,6 +370,11 @@ class TelemetrySampleRead(BaseModel):
 class TelemetryLatestRead(BaseModel):
     battery_id: int
     asset_id: str
+    battery_classification: BatteryClassification | None
+    has_real_telemetry: bool
+    telemetry_source: str | None
+    latest_any_source: str | None
+    latest_any_at: datetime | None
     gateway: TelemetryGatewayRead | None
     sample: TelemetrySampleRead | None
     server_time: datetime
@@ -466,6 +477,9 @@ class InspectionSummary(BaseModel):
 
 class DashboardSummary(BaseModel):
     total_batteries: int
+    real_batteries: int = 0
+    demo_batteries: int = 0
+    unclassified_batteries: int = 0
     by_status: list[StatusCount]
     soc_available: int
     soh_available: int

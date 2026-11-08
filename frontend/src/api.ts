@@ -110,6 +110,11 @@ export const api = {
     request<Battery>("/batteries", { method: "POST", body: JSON.stringify(payload) }),
   updateBattery: (id: number, payload: Record<string, unknown>) =>
     request<Battery>(`/batteries/${id}`, { method: "PATCH", body: JSON.stringify(payload) }),
+  setBatteryClassification: (id: number, classification: "real" | "demo") =>
+    request<Battery>(`/batteries/${id}/classification`, {
+      method: "PATCH",
+      body: JSON.stringify({ classification }),
+    }),
   deleteBattery: (id: number) => request<void>(`/batteries/${id}`, { method: "DELETE" }),
 
   latestTelemetry: (batteryId: number, signal?: AbortSignal) =>

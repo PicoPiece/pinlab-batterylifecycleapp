@@ -81,7 +81,7 @@ export function MonitoringPage() {
           <strong>{t("monitoring.previewBanner")}</strong>
           <span>{t("monitoring.previewDetail")}</span>
         </div>
-        <span className="badge badge-preview">{t("monitoring.noDevice")}</span>
+        <span className="badge badge-preview">{t("monitoring.fleetPreview")}</span>
       </div>
 
       {assets.length === 0 ? (
@@ -137,9 +137,14 @@ export function MonitoringPage() {
                     </div>
                     <p className="muted">{selected.model ?? "—"} · {selected.serial_number ?? "—"}</p>
                   </div>
-                  <Link className="btn btn-ghost" to={`/batteries/${selected.id}`}>
-                    {t("passport.title")}
-                  </Link>
+                  <div className="button-row">
+                    <Link className="btn btn-ghost" to={`/batteries/${selected.id}`}>
+                      {t("passport.title")}
+                    </Link>
+                    <Link className="btn btn-primary" to={`/batteries/${selected.id}?tab=analytics`}>
+                      {t("monitoring.openAnalytics")}
+                    </Link>
+                  </div>
                 </div>
 
                 <p className="monitor-demo-note">{t("monitoring.demoHint")}</p>
@@ -180,7 +185,7 @@ export function MonitoringPage() {
                         <span className="eyebrow">{t("monitoring.connection")}</span>
                         <h3>{t("common.previewOnly")}</h3>
                       </div>
-                      <span className="badge badge-preview">{t("monitoring.noDevice")}</span>
+                      <span className="badge badge-preview">{t("monitoring.fleetPreview")}</span>
                     </div>
                     <dl className="connection-list">
                       <div><dt>{t("monitoring.gateway")}</dt><dd>{t("monitoring.notAssigned")}</dd></div>

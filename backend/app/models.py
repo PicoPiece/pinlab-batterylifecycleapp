@@ -57,6 +57,13 @@ class SpecificationStatus(str, Enum):
     unknown = "unknown"
 
 
+class BatteryClassification(str, Enum):
+    """Authoritative Passport identity, independent of telemetry provenance."""
+
+    real = "real"
+    demo = "demo"
+
+
 class MeasurementMetric(str, Enum):
     soc = "soc"
     soh = "soh"
@@ -204,6 +211,14 @@ class Battery(Base):
         SAEnum(SpecificationStatus, native_enum=False, length=32),
         default=SpecificationStatus.unknown,
         nullable=False,
+    )
+    # NULL means unclassified. There is deliberately no default: historical
+    # production rows must be classified through the approved inventory rather
+    # than silently treated as demo or real.
+    classification: Mapped[BatteryClassification | None] = mapped_column(
+        SAEnum(BatteryClassification, native_enum=False, length=16),
+        nullable=True,
+        index=True,
     )
     source: Mapped[str | None] = mapped_column(String(160), nullable=True)
     received_at: Mapped[date | None] = mapped_column(Date, nullable=True)
