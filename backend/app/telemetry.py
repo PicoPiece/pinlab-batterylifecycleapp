@@ -668,6 +668,27 @@ def _completeness(sample_count: int, expected: int) -> float:
     return round(min(100.0, sample_count / max(1, expected) * 100.0), 1)
 
 
+def _monitoring_window(
+    assignment: GatewayBatteryAssignment | None,
+    from_at: datetime,
+    to_at: datetime,
+) -> tuple[datetime | None, datetime | None, int, str]:
+    """Return the effective monitoring window and its expected sample count.
+
+    Pre-assignment and pre-retention periods are not device outages. The
+    expected count is based on the active Gateway assignment window inside the
+    requested range. If there is no active assignment, completeness is not
+    computed rather than inventing an availability window.
+    """
+    if assignment is None:
+        return None, None, 0, "no_active_gateway_assignment"
+    start = max(from_at, _utc(assignment.assigned_at) or from_at)
+    end = min(to_at, _utc(assignment.unassigned_at) or to_at)
+    if end <= start:
+        return None, None, 0, "no_monitoring_window_in_range"
+    return start, end, _expected_sample_count(start, end), "active_gateway_assignment_window"
+
+
 def _empty_evidence(
     battery: Battery,
     range_key: str,
@@ -676,7 +697,7 @@ def _empty_evidence(
     now: datetime,
     assignment: GatewayBatteryAssignment | None,
 ) -> DiagnosticEvidenceRead:
-    expected = _expected_sample_count(from_at, to_at)
+    monitoring_from, monitoring_to, expected, completeness_basis = _monitoring_window(assignment, from_at, to_at)
     empty = lambda unit: DiagnosticStatsRead(count=0, min=None, max=None, avg=None, stddev=None, unit=unit)
     gateway_id = assignment.gateway.gateway_id if assignment else None
     slot = assignment.battery_slot if assignment else None
@@ -692,6 +713,9 @@ def _empty_evidence(
         range=range_key,
         from_at=from_at,
         to_at=to_at,
+        monitoring_from_at=monitoring_from,
+        monitoring_to_at=monitoring_to,
+        completeness_basis=completeness_basis,
         latest_measured_at=None,
         latest_received_at=None,
         sample_count=0,
@@ -815,7 +839,7 @@ def _postgres_evidence(
         params,
     ).mappings().one()
     sample_count = int(pack_row["sample_count"] or 0)
-    expected = _expected_sample_count(from_at, to_at)
+    monitoring_from, monitoring_to, expected, completeness_basis = _monitoring_window(assignment, from_at, to_at)
     if sample_count == 0:
         return _empty_evidence(battery, range_key, from_at, to_at, now, assignment)
 
@@ -949,6 +973,9 @@ def _postgres_evidence(
         range=range_key,
         from_at=from_at,
         to_at=to_at,
+        monitoring_from_at=monitoring_from,
+        monitoring_to_at=monitoring_to,
+        completeness_basis=completeness_basis,
         latest_measured_at=_utc(pack_row["latest_measured_at"]),
         latest_received_at=_utc(pack_row["latest_received_at"]),
         sample_count=sample_count,
@@ -1047,7 +1074,7 @@ def _fallback_evidence(
             if len(gaps) >= MAX_EVIDENCE_GAPS:
                 break
     latest = rows[-1]
-    expected = _expected_sample_count(from_at, to_at)
+    monitoring_from, monitoring_to, expected, completeness_basis = _monitoring_window(assignment, from_at, to_at)
     gateway_id = assignment.gateway.gateway_id if assignment else None
     slot = assignment.battery_slot if assignment else None
     all_temps = [value for values in temp_values.values() for value in values]
@@ -1063,6 +1090,9 @@ def _fallback_evidence(
         range=range_key,
         from_at=from_at,
         to_at=to_at,
+        monitoring_from_at=monitoring_from,
+        monitoring_to_at=monitoring_to,
+        completeness_basis=completeness_basis,
         latest_measured_at=_utc(latest.measured_at),
         latest_received_at=_utc(latest.received_at),
         sample_count=len(rows),

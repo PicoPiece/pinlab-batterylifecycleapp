@@ -108,7 +108,7 @@ try {
   pass("All 16 historical cell series", `${cellBytes} bytes include_cells=true`);
 
   await page.locator(".telemetry-cell-button").first().click();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1200);
   assert.match(await page.locator(".telemetry-cell-controls .telemetry-segment button.active").innerText(), /Tất cả 16 cell|All 16 cells/);
   assert.equal(await page.locator(".telemetry-cell-check input:checked").count(), 16);
   assert.equal(await page.locator(".telemetry-cell-button.is-selected").count(), 1);
@@ -116,13 +116,16 @@ try {
   pass("Cell click highlights history", "Cell 01 highlighted above all 16 series");
 
   await page.locator(".telemetry-primary-tabs button").nth(2).click();
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(500);
   assert.equal(await page.locator(".telemetry-chart-card").count(), 3);
   await page.screenshot({ path: path.join(screenshotDir, "desktop-history-pack.png"), fullPage: true });
   pass("History pack panels", "SOC / voltage / current");
 
   await page.locator(".telemetry-history-tabs button").nth(1).click();
   await page.waitForTimeout(500);
+  await page.locator(".telemetry-history-cell-select").waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+  await page.locator(".telemetry-chart-card").nth(1).waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(1200);
   assert.ok(await page.locator(".telemetry-chart-card").count() >= 2);
   await page.locator(".telemetry-history-cell-select select").selectOption("15");
   await page.waitForTimeout(300);

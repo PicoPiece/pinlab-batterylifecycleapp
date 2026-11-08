@@ -342,6 +342,7 @@
 - All 16 chart line components are mounted; total Cell-tab lines also include the separate delta chart.
 - Added selected-cell highlighting above overlapping absolute lines, dimmed non-selected lines, complete synchronized tooltips (including identical values), overlap explanation, optional relative-to-average mode preserving actual tooltips, and mobile-safe tooltip sizing.
 - Added authenticated `GET /batteries/{id}/telemetry/evidence?range=1h|24h|7d` contract `diagnostic-evidence-v1`: bounded raw statistics, per-cell/temperature statistics, gaps, completeness, provenance and limitations. Example: `docs/mission018_2/example-evidence.json`.
+- Review correction: completeness uses the effective active Gateway assignment window (`monitoring_from_at`/`monitoring_to_at`), not pre-assignment time; no assignment is reported explicitly rather than as an outage.
 - Mobile: 360/390/430px verified, one Overview chart at a time, collapsible cell picker, touch-sized controls and health-first ordering. No production deployment.
 - Existing Min/Max/Avg, All 16, custom selection, cell delta and 1h/24h/7d behavior preserved.
-- Tests: **63 backend tests passed**, **14 frontend tests passed**, Mission 018.2 E2E **5/5 passed**, plus Mission 018 regression **12/12** and Mission 018.1 **4/4**; before/after screenshots captured. No production deployment or data mutation.
+- Tests: **64 backend tests passed**, **14 frontend tests passed**, Mission 018.2 E2E **5/5 passed**, plus Mission 018 regression **12/12** and Mission 018.1 **4/4**; before/after screenshots captured. No production deployment or data mutation.

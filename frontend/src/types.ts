@@ -447,6 +447,9 @@ export interface DiagnosticEvidence {
   range: TelemetryRange;
   from_at: string;
   to_at: string;
+  monitoring_from_at: string | null;
+  monitoring_to_at: string | null;
+  completeness_basis: string;
   latest_measured_at: string | null;
   latest_received_at: string | null;
   sample_count: number;

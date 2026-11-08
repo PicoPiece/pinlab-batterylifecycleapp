@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from app.main import app
 from app.models import (
     Battery,
@@ -445,6 +446,29 @@ def test_diagnostic_evidence_requires_auth():
         assert client.get("/api/v1/batteries/17/telemetry/evidence").status_code == 401
     finally:
         client.close()
+
+
+def test_diagnostic_completeness_uses_assignment_window(admin_client, db, admin, pinlab_org):
+    battery, _ = create_mapped_battery(db, admin, pinlab_org, "EVIDENCE-WINDOW")
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    assignment = db.scalar(
+        select(GatewayBatteryAssignment).where(
+            GatewayBatteryAssignment.battery_id == battery.id,
+            GatewayBatteryAssignment.unassigned_at.is_(None),
+        )
+    )
+    assignment.assigned_at = now - timedelta(minutes=30)
+    db.commit()
+
+    evidence = admin_client.get(
+        f"/api/v1/batteries/{battery.id}/telemetry/evidence?range=24h"
+    ).json()
+    assert evidence["sample_count"] == 0
+    assert evidence["monitoring_from_at"] is not None
+    assert evidence["monitoring_to_at"] is not None
+    assert evidence["completeness_basis"] == "active_gateway_assignment_window"
+    # 30 minutes / 10-second cadence, not the full 24-hour range.
+    assert 180 <= evidence["expected_sample_count"] <= 182
 
 
 def test_diagnostic_evidence_without_telemetry(admin_client, db, admin, pinlab_org):

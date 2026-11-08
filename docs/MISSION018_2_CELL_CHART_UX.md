@@ -123,6 +123,7 @@ The response contains:
 - battery/asset/organization/classification metadata;
 - Gateway/slot/source/protocol/time-quality provenance;
 - bounded from/to range and expected 10-second interval;
+- effective assignment-based monitoring window and completeness basis;
 - sample count, expected sample count and data completeness;
 - pack voltage/current/SOC/capacity min/max/avg/stddev and peak absolute current;
 - per-cell min/max/avg/stddev with one-based cell indices;
@@ -138,6 +139,23 @@ No long-term raw telemetry persistence was introduced.
 Example sorted JSON: `docs/mission018_2/example-evidence.json` (clearly labelled
 as an illustrative local-copy output, not a production evidence record).
 
+### Completeness correction from review
+
+The initial development version compared observed samples against the full
+requested range. That incorrectly counted the time before the active Gateway
+assignment (and any pre-monitoring period) as an outage.
+
+Review fix:
+
+- `monitoring_from_at = max(from_at, assigned_at)`
+- `monitoring_to_at = min(to_at, unassigned_at or to_at)`
+- `expected_sample_count` uses that effective window, not the raw range
+- `completeness_basis = "active_gateway_assignment_window"` or an explicit
+  no-window reason
+- no active assignment yields zero expected samples and an explicit basis,
+  rather than an artificial outage percentage
+- raw retention remains bounded by the requested 1h/24h/7d range
+
 ### Definitions
 
 - `cell_delta_mv(t) = max(cell_voltages_mv[t]) - min(cell_voltages_mv[t])`,
@@ -145,7 +163,8 @@ as an illustrative local-copy output, not a production evidence record).
 - `relative_cell_voltage_mv(t, i) = cell_voltage_mv(t, i) - mean(all cells at t)`.
 - `peak_abs_current_a = max(abs(pack_current_a))`; polarity is not interpreted.
 - `data_completeness_pct` compares observed samples with an expected 10-second
-  cadence over the requested range, capped at 100%.
+  cadence over the effective `monitoring_from_at`/`monitoring_to_at` window,
+  capped at 100%; pre-assignment periods are not counted as outages.
 - A gap is a consecutive measured-at interval greater than 30 seconds; no
   interpolation is performed.
 
@@ -163,7 +182,7 @@ as an illustrative local-copy output, not a production evidence record).
 
 ## 6. Regression tests
 
-Backend tests: **63 passed**.
+Backend tests: **64 passed**.
 
 Frontend tests: **14 passed**.
 
@@ -193,7 +212,7 @@ Covered:
 
 Existing Mission 018 regression E2E **12/12** and Mission 018.1 regression E2E **4/4** remain intact.
 
-## 5. Before / after evidence
+## 7. Before / after evidence
 
 - Before, production:
   - `docs/mission018_2/before-all16-chart.png`
@@ -216,7 +235,7 @@ are preserved. The selected-line highlight, dimming, tooltip completeness and
 relative mode make the overlap inspectable without fabricating vertical
 offsets.
 
-## 7. Performance and safety
+## 8. Performance and safety
 
 Before/after implementation observations:
 
@@ -227,9 +246,12 @@ Before/after implementation observations:
   selection (16 cells + delta chart), and 18 after a selected cell adds its
   min/max overlays.
 - Diagnostic evidence API on the local isolated copy:
-  - 1h: ~74 ms / ~4.7 KB / 289 samples
-  - 24h: ~107 ms / ~4.8 KB / 571 samples
-  - 7d: ~108 ms / ~4.8 KB / 571 samples
+  - 1h: ~82 ms / ~5.2 KB / 603 samples
+  - 24h: ~437 ms / ~5.2 KB / 9,208 samples
+  - 7d: ~2.5 s / ~5.2 KB / 61,048 samples
+  - 60,480-sample synthetic benchmark: all stats bounded; ~2.5s on-demand
+  - Query plans: pack scan ~47 ms; gap window ~70 ms using the measured-at
+    index; 16-cell expansion/aggregation ~444 ms
 - Browser production-copy navigation: ~2.2 s; 24h chart visible ~0.5 s.
 - Server idle observations (local stack): backend ~80 MB, DB ~37 MB.
 - Sensitive production data was read-only.
@@ -237,7 +259,7 @@ Before/after implementation observations:
   mutation occurred.
 - No production deployment was performed for this mission.
 
-## 7. Git
+## 9. Git
 
 - Branch: `mission-018.2-cell-chart-ux`
 - Draft PR: https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4

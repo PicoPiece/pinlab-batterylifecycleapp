@@ -478,6 +478,9 @@ class DiagnosticEvidenceRead(BaseModel):
     range: Literal["1h", "24h", "7d"]
     from_at: datetime
     to_at: datetime
+    monitoring_from_at: datetime | None
+    monitoring_to_at: datetime | None
+    completeness_basis: str
     latest_measured_at: datetime | None
     latest_received_at: datetime | None
     sample_count: int
