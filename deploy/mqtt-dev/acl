@@ -3,3 +3,6 @@ topic read pinlab/v1/gateways/+/telemetry
 
 user gw-000001
 topic write pinlab/v1/gateways/GW-000001/telemetry
+
+user pinlab-prod-ingest
+topic read pinlab/v1/gateways/+/telemetry

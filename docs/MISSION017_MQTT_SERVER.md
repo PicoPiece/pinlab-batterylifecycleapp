@@ -401,5 +401,43 @@ Battery Passport has been created.
   51.2 V, 100 Ah, 5.12 kWh, 16S, serial NULL, PinLab Internal org 1.
 - Proposed mapping: `GW-000001 + slot 0 → PL-APESS-0001`.
 - Production consumer credential/ACL staged only; not applied to broker.
-- Production pilot remains **BLOCKED pending CTO final approval** of the
-  Battery Passport identity and exact deployment changes.
+- Production pilot remained **BLOCKED pending CTO final approval** at the time
+  of this preflight record.
+
+## 18. Production pilot deployment — 2026-11-08
+
+CTO approval was received for the bounded one-battery/one-gateway production
+pilot. The following changes were applied:
+
+- Production baseline verified at image `rc-ac3e599`, Alembic
+  `c9d8e7f6a5b4`, 10 users, 3 organizations, 16 batteries, 14 inspections,
+  45 measurements and 2 attachments; no APESS production battery existed.
+- Fresh backup:
+  `/home/picopiece/backups/pinlab-app/mission017-prod-final-20261108T154552Z/`.
+  Dump SHA256
+  `4a7ba507ede196138dc7513caf33b58e44264abadc50ea4f0a27f2aae1454f46`;
+  isolated restore check returned the baseline schema/counts.
+- QA consumer stopped. Scoped `pinlab-prod-ingest` credential/ACL added to the
+  existing broker; existing account hashes and Gateway credentials preserved.
+- Additive migration `e5f6a7b8c9d0` applied; existing business counts unchanged.
+- Battery Passport `PL-APESS-0001` created as production battery ID `17`,
+  PinLab Internal organization `1`, APESS ES-LV-5, LiFePO4, 51.2 V, 100 Ah,
+  5.12 kWh, 16S, serial NULL, received date NULL, status `in_service`.
+- `GW-000001` database ID `1`, slot `0` assigned to battery `17` at
+  `2026-11-08T15:47:23Z`.
+- One production consumer started:
+  `pinlab-app-mqtt-consumer:rc-mqtt-2f068da`
+  (`sha256:fb2696ec725f658ede6ce5be140a2a1e630c257846342006478101d71b7603cf`).
+- First new production `REAL_BMS` row: id `1`,
+  `GW-000001:boot24:227`, 52.534 V, 0.000 A, SOC 35.45%,
+  35.450/100.000 Ah, 16 cells, 5 temperatures. Subsequent messages persisted;
+  no duplicate message IDs.
+- Consumer healthy with 0 restarts; production app health 200; OpenProject
+  login 200; existing API/frontend images unchanged.
+- Retention dry-run showed 0 expired samples. The 7-day `telemetry_samples`
+  schedule is active daily at 03:45 via `deploy/mqtt-prod/retention.sh`.
+- OpenProject work package `#56`, activity `230`, records the deployment.
+- Full deployment evidence: `docs/MISSION017_PRODUCTION_DEPLOYMENT.md`.
+
+**Mission 017-PROD result: PASS.** Real APESS telemetry is persisted against
+`PL-APESS-0001` in production.

@@ -234,11 +234,11 @@
 ### Mission 017 — Server MQTT Broker, Ingestion, PostgreSQL & Cloudflare WSS
 
 - **Project:** BatteryLifecycleApp / IoT Gateway
-- **Scope:** Read-only infrastructure audit, isolated development Mosquitto broker, MQTT contract v1, manual gateway/battery mapping, ingestion consumer, raw telemetry schema, 7-day retention job, Cloudflare WSS route verification and synthetic network tests.
-- **Status:** **IMPLEMENTED / TESTED / EXTERNAL WSS VERIFIED / REAL_BMS QA PASS; PRODUCTION PILOT BLOCKED PENDING CTO APPROVAL**.
+- **Scope:** Read-only infrastructure audit, isolated development Mosquitto broker, MQTT contract v1, manual gateway/battery mapping, ingestion consumer, raw telemetry schema, 7-day retention job, Cloudflare WSS route verification and synthetic network tests; subsequently one-battery/one-gateway production pilot.
+- **Status:** **IMPLEMENTED / TESTED / EXTERNAL WSS VERIFIED / REAL_BMS QA PASS / PRODUCTION PILOT PASS**.
 - **Branch:** `mission-017-server-mqtt`
-- **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `deploy/mqtt-dev/CLOUDFLARE_ROUTE.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`.
-- **Latest commits:** `e91d290` pipeline, `3b2a304` route preparation, `b0c5195` external WSS evidence, `92024db` stability/ACL evidence, `88b0e4a` device credential readiness.
+- **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `docs/MISSION017_PRODUCTION_DEPLOYMENT.md`, `deploy/mqtt-dev/CLOUDFLARE_ROUTE.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`, `deploy/mqtt-prod/retention.sh`.
+- **Latest commits:** `e91d290` pipeline, `3b2a304` route preparation, `b0c5195` external WSS evidence, `92024db` stability/ACL evidence, `88b0e4a` device credential readiness, `2f068da` REAL_BMS QA and production readiness.
 
 #### Report
 
@@ -251,7 +251,10 @@
 - External WSS `wss://mqtt-pinlab.picopiece.com/mqtt` verified with public DNS/TLS, WebSocket upgrade, authenticated QoS 1 publish, QA PostgreSQL persistence, ACL denial and broker-reconnect stability.
 - QA proof: `verify-wss-1794124282` sample id 9; stability samples `stability-1794124309-0/317-1/325-2`; unauthorized topic returned MQTT v5 `Not authorized`.
 - Existing `pinlab-app` health and `pinlab-pm` login remained **200**.
-- No public 1883/8883; no production database writes; no real hardware PASS claimed.
+- No public 1883/8883. During pre-production/QA, no production database writes were made; production writes began only in the approved Mission 017-PROD cutover below.
 - **Credential status:** development device credential `gw-000001` rotated 2026-11-08; protected local handoff file mode 600; no secret committed or logged.
 - **Real BMS QA:** PASS. `GW-000001:boot23:0` (row 20) and `:boot23:2` (row 22), `source=REAL_BMS`, 52.573 V, 0.000 A, 35.66% SOC, 35.660/100 Ah, 16 cells, 5 temperatures, no duplicates.
-- **Production pilot:** BLOCKED pending CTO final approval. Proposed Passport `PL-APESS-0001` (PinLab Internal org 1); no production Passport, migration or consumer switch performed. Preflight backup and additive migration rehearsal PASS.
+- **Production pilot:** PASS. CTO-approved Passport `PL-APESS-0001` created as production battery ID 17 (PinLab Internal org 1); additive migration `e5f6a7b8c9d0` applied; `GW-000001` slot 0 mapped to battery 17 at `2026-11-08T15:47:23Z`; QA consumer stopped; one production consumer `pinlab-app-mqtt-consumer:rc-mqtt-2f068da` started.
+- **Production real telemetry:** PASS. New `REAL_BMS` row id 1, message `GW-000001:boot24:227`, 52.534 V, 0.000 A, SOC 35.45%, 35.450/100.000 Ah, 16 cells, 5 temperatures; no duplicates. Existing business records unchanged; app/OpenProject health 200.
+- **Production retention:** 7-day `telemetry_samples` policy active daily at 03:45 via `deploy/mqtt-prod/retention.sh`.
+- **Production evidence:** `docs/MISSION017_PRODUCTION_DEPLOYMENT.md`; OpenProject work package `#56`, activity `230`.
