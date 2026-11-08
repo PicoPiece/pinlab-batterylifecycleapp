@@ -5,8 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.authorization import require_super_admin
 from app.database import get_db
-from app.deps import require_admin
 from app.models import User
 from app.schemas import AdminPasswordResetResponse, UserCreate, UserRead, UserUpdate
 from app.security import hash_password
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.get("", response_model=list[UserRead])
 def list_users(
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_super_admin),
 ) -> list[User]:
     return list(db.scalars(select(User).order_by(User.full_name)).all())
 
@@ -26,7 +26,7 @@ def list_users(
 def create_user(
     payload: UserCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_admin),
+    _: User = Depends(require_super_admin),
 ) -> User:
     user = User(
         email=payload.email.lower(),
@@ -50,7 +50,7 @@ def create_user(
 def reset_user_password(
     user_id: int,
     db: Session = Depends(get_db),
-    current: User = Depends(require_admin),
+    current: User = Depends(require_super_admin),
 ) -> AdminPasswordResetResponse:
     user = db.get(User, user_id)
     if not user:
@@ -74,7 +74,7 @@ def update_user(
     user_id: int,
     payload: UserUpdate,
     db: Session = Depends(get_db),
-    current: User = Depends(require_admin),
+    current: User = Depends(require_super_admin),
 ) -> User:
     user = db.get(User, user_id)
     if not user:

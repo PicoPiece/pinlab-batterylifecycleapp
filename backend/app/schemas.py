@@ -10,6 +10,8 @@ from app.models import (
     MeasurementMetric,
     MeasurementQuality,
     MeasurementSource,
+    OrganizationKind,
+    OrganizationRole,
     SpecificationStatus,
     UserRole,
 )
@@ -55,6 +57,26 @@ class AdminPasswordResetResponse(BaseModel):
     user: UserRead
 
 
+class AccessMembershipRead(BaseModel):
+    id: int
+    organization_id: int
+    organization_name: str
+    organization_slug: str
+    role: OrganizationRole
+    is_active: bool
+
+
+class AccessRead(BaseModel):
+    user: UserRead
+    is_super_admin: bool
+    is_manager: bool
+    is_agency_admin: bool
+    can_write: bool
+    can_create_battery: bool
+    can_manage_access: bool
+    memberships: list[AccessMembershipRead]
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str = Field(min_length=2, max_length=160)
@@ -85,7 +107,7 @@ class BatteryBase(BaseModel):
 
 
 class BatteryCreate(BatteryBase):
-    pass
+    organization_id: int | None = None
 
 
 class BatteryUpdate(BaseModel):
@@ -102,6 +124,7 @@ class BatteryUpdate(BaseModel):
     source: str | None = Field(default=None, max_length=160)
     received_at: date | None = None
     notes: str | None = None
+    organization_id: int | None = None
 
 
 class BatteryRead(BatteryBase, ORMModel):
@@ -111,6 +134,7 @@ class BatteryRead(BatteryBase, ORMModel):
     updated_at: datetime
     created_by_id: int
     updated_by_id: int
+    organization_id: int | None = None
 
 
 class MeasurementSnapshot(ORMModel):
@@ -136,6 +160,80 @@ class BatteryPortfolioItem(BatteryRead):
     last_inspection_at: datetime | None = None
     inspection_count: int = 0
     evidence_count: int = 0
+
+
+class OrganizationRead(ORMModel):
+    id: int
+    slug: str
+    name: str
+    kind: OrganizationKind
+    is_active: bool
+    created_at: datetime
+
+
+class OrganizationCreate(BaseModel):
+    slug: str = Field(min_length=2, max_length=80, pattern=r"^[a-z0-9-]+$")
+    name: str = Field(min_length=2, max_length=160)
+    kind: OrganizationKind = OrganizationKind.agency
+
+
+class OrganizationMembershipRead(ORMModel):
+    id: int
+    user_id: int
+    organization_id: int
+    organization_name: str
+    user_email: str
+    user_full_name: str
+    role: OrganizationRole
+    is_active: bool
+    created_at: datetime
+
+
+class OrganizationMembershipCreate(BaseModel):
+    user_id: int
+    role: OrganizationRole
+
+
+class OrganizationUserCreate(BaseModel):
+    email: EmailStr
+    full_name: str = Field(min_length=2, max_length=160)
+    password: str = Field(min_length=8, max_length=128)
+    role: OrganizationRole
+
+
+class OrganizationMembershipUpdate(BaseModel):
+    role: OrganizationRole | None = None
+    is_active: bool | None = None
+
+
+class BatteryAssignmentRead(ORMModel):
+    id: int
+    battery_id: int
+    battery_asset_id: str
+    user_id: int
+    user_email: str
+    user_full_name: str
+    assigned_by_id: int
+    is_active: bool
+    created_at: datetime
+    ended_at: datetime | None
+
+
+class BatteryAssignmentCreate(BaseModel):
+    user_id: int
+
+
+class SecurityAuditEventRead(ORMModel):
+    id: int
+    actor_id: int
+    actor_email: str
+    actor_full_name: str
+    organization_id: int | None
+    action: str
+    target_type: str
+    target_id: int | None
+    event_metadata: dict
+    created_at: datetime
 
 
 class MeasurementCreate(BaseModel):

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { SpecBadge, StatusBadge } from "../components/StatusBadge";
@@ -12,7 +12,7 @@ const STATUSES: BatteryStatus[] = ["received", "inspecting", "tested", "availabl
 const SOURCE_FILTERS = ["manual", "mock", "telemetry", "none"] as const;
 
 export function BatteriesPage() {
-  const { user } = useAuth();
+  const { access } = useAuth();
   const { t } = useI18n();
   const navigate = useNavigate();
   const [items, setItems] = useState<BatteryPortfolioItem[]>([]);
@@ -70,7 +70,7 @@ export function BatteriesPage() {
           <h2>{t("fleet.title")}</h2>
           <p className="muted">{t("fleet.subtitle")}</p>
         </div>
-        {canWrite(user?.role) ? (
+        {access?.can_create_battery ? (
           <Link className="btn btn-primary" to="/batteries/new">+ {t("fleet.add")}</Link>
         ) : null}
       </div>
@@ -112,6 +112,35 @@ export function BatteriesPage() {
             detail={search || status || chemistry || source ? t("common.noResultsDetail") : t("fleet.noAssetsDetail")}
           />
         ) : (
+          <>
+          <div className="mobile-asset-list">
+            {filtered.map((item) => (
+              <Link className="mobile-asset-card" key={item.id} to={`/batteries/${item.id}`}>
+                <div className="mobile-asset-top">
+                  <div className="mobile-asset-id">
+                    <strong>{item.asset_id}</strong>
+                    <span>{item.model ?? "—"} · {item.serial_number ?? "—"}</span>
+                  </div>
+                  <StatusBadge status={item.status} />
+                </div>
+                <div className="mobile-asset-metrics">
+                  <div className="mobile-asset-metric">
+                    <span>SOC</span>
+                    <strong>{item.latest.soc ? formatNumber(item.latest.soc.value, "%") : t("common.noData")}</strong>
+                  </div>
+                  <div className="mobile-asset-metric">
+                    <span>SOH</span>
+                    <strong>{item.latest.soh ? formatNumber(item.latest.soh.value, "%") : t("common.noData")}</strong>
+                  </div>
+                  <div className="mobile-asset-metric">
+                    <span>{t("fleet.source")}</span>
+                    <strong>{item.latest.soh ? t(`source.${item.latest.soh.source}`) : t("common.noData")}</strong>
+                  </div>
+                </div>
+                <span className="mobile-asset-open">{t("mobile.openPassport")} →</span>
+              </Link>
+            ))}
+          </div>
           <div className="table-wrap">
             <table className="data-table fleet-table">
               <thead>
@@ -171,10 +200,11 @@ export function BatteriesPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
         <div className="table-foot">
           <span>{t("fleet.total", { n: filtered.length })}</span>
-          <span className="provenance-inline"><span className="source-dot source-mock" />{t("dashboard.demoDisclosure")}</span>
+          <span className="provenance-inline"><span className="source-dot source-mock" />{t("dashboard.demoDisclosure", { n: filtered.length })}</span>
         </div>
       </section>
     </div>

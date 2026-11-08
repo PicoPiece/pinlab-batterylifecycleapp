@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { Loading } from "../components/States";
 import type { BatteryStatus, SpecificationStatus } from "../types";
@@ -30,7 +30,7 @@ const emptyForm: FormState = {
 export function BatteryFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { access, canWrite } = useAuth();
   const { t } = useI18n();
   const isEdit = Boolean(id);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -68,7 +68,7 @@ export function BatteryFormPage() {
     };
   }, [id]);
 
-  if (!canWrite(user?.role)) {
+  if (isEdit ? !canWrite : !access?.can_create_battery) {
     return (
       <div className="state-box state-error">
         <strong>{t("batteryForm.noPermission")}</strong>

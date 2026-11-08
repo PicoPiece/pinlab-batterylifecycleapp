@@ -13,6 +13,13 @@ const navItems = [
   { to: "/users", key: "nav.access", adminOnly: true },
 ];
 
+const mobileNavItems = [
+  { to: "/", key: "mobile.home", icon: "⌂", end: true },
+  { to: "/batteries", key: "mobile.assets", icon: "▣" },
+  { to: "/inspections", key: "mobile.inspections", icon: "✓" },
+  { to: "/change-password", key: "mobile.account", icon: "◉" },
+];
+
 const pageKeys: Record<string, string> = {
   "/": "nav.overview",
   "/batteries": "passport.title",
@@ -23,12 +30,44 @@ const pageKeys: Record<string, string> = {
 };
 
 export function Layout() {
-  const { user, logout } = useAuth();
+  const { user, access, logout } = useAuth();
   const { t, lang, setLang } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [assetCount, setAssetCount] = useState<number | null>(null);
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const check = async () => {
+      try {
+        await api.health();
+        if (active) setOnline(true);
+      } catch {
+        if (active) setOnline(false);
+      }
+    };
+    void check();
+    const timer = window.setInterval(() => void check(), 10000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -37,7 +76,11 @@ export function Layout() {
     }
     let active = true;
     api.dashboard()
-      .then((data) => active && setAssetCount(data.total_batteries))
+      .then((data) => {
+        if (!active) return;
+        setAssetCount(data.total_batteries);
+        setLastRefresh(new Date());
+      })
       .catch(() => active && setAssetCount(null));
     return () => {
       active = false;
@@ -60,6 +103,15 @@ export function Layout() {
   };
 
   const changeLang = (next: Lang) => setLang(next);
+  const effectiveRole = access?.is_super_admin
+    ? "pinlab_super_admin"
+    : access?.is_manager
+      ? "pinlab_manager"
+      : access?.is_agency_admin
+        ? "agency_admin"
+        : access?.can_write
+          ? "technician"
+          : "viewer";
 
   return (
     <div className="app-shell">
@@ -91,7 +143,7 @@ export function Layout() {
 
         <nav className="main-nav" aria-label="Primary navigation" onClick={() => setMenuOpen(false)}>
           {navItems
-            .filter((item) => !item.adminOnly || user?.role === "admin")
+            .filter((item) => !item.adminOnly || access?.can_manage_access)
             .map((item) => (
               <NavLink
                 key={item.to}
@@ -112,6 +164,11 @@ export function Layout() {
           <strong>{t("nav.demoDataset")}</strong>
           <p>{t("nav.demoNote")}</p>
           <span className="sidebar-status">{assetCount === null ? t("nav.demoDataset") : t("nav.assets", { n: assetCount })}</span>
+          <small className="sidebar-refresh">
+            {lastRefresh
+              ? t("common.lastRefresh", { time: lastRefresh.toLocaleTimeString() })
+              : t("common.noRefresh")}
+          </small>
         </div>
         <div className="sidebar-foot">
           <NavLink className="nav-link account-link" to="/change-password">
@@ -122,7 +179,7 @@ export function Layout() {
             <span className="avatar">{(user?.full_name ?? "?").slice(0, 1).toUpperCase()}</span>
             <div>
               <strong>{user?.full_name}</strong>
-              <small>{user ? t(`role.${user.role}`) : ""}</small>
+              <small>{user ? t(`role.${effectiveRole}`) : ""}</small>
             </div>
           </div>
           <button className="btn btn-ghost btn-full" onClick={() => void handleLogout()}>
@@ -154,6 +211,9 @@ export function Layout() {
                 EN
               </button>
             </div>
+            <span className={`connection-pill ${online ? "connection-online" : "connection-offline"}`}>
+              {online ? t("common.online") : t("common.offline")}
+            </span>
             <span className="env-pill">AGENCY PREVIEW</span>
             <span className="topbar-user">{user?.full_name}</span>
           </div>
@@ -162,6 +222,20 @@ export function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <nav className="mobile-bottom-nav" aria-label={t("mobile.home")}>
+        {mobileNavItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) => (isActive ? "mobile-nav-item active" : "mobile-nav-item")}
+          >
+            <span className="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
+            <span>{t(item.key)}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

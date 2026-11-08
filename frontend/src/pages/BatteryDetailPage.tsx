@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ApiError, api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { SpecBadge, StatusBadge } from "../components/StatusBadge";
 import { EmptyState, ErrorState, Loading } from "../components/States";
@@ -22,7 +22,7 @@ type Tab = (typeof TABS)[number];
 export function BatteryDetailPage() {
   const { id } = useParams();
   const batteryId = Number(id);
-  const { user } = useAuth();
+  const { canWrite } = useAuth();
   const { t } = useI18n();
   const [params, setParams] = useSearchParams();
   const rawTab = params.get("tab");
@@ -82,7 +82,7 @@ export function BatteryDetailPage() {
   if (error) return <ErrorState message={error} />;
   if (!battery) return null;
 
-  const writer = canWrite(user?.role);
+  const writer = canWrite;
   const latestSoh = latest.soh ?? null;
   const evidenceReady = inspections.length > 0 && attachments.length > 0;
   const source = latestSoh?.source ?? latest.soc?.source;
@@ -156,7 +156,7 @@ export function BatteryDetailPage() {
           </p>
         </div>
         <div className="button-row">
-          <button className="btn btn-ghost" onClick={() => window.print()}>{t("passport.export")}</button>
+          <button className="btn btn-ghost passport-export" onClick={() => window.print()}>{t("passport.export")}</button>
           {writer ? (
             <>
               <Link className="btn btn-ghost" to={`/batteries/${battery.id}/edit`}>{t("passport.edit")}</Link>
@@ -176,14 +176,14 @@ export function BatteryDetailPage() {
             <span className="toolbar-count">8 {t("common.fields")}</span>
           </div>
           <dl className="spec-grid">
-            <div><dt>Serial</dt><dd>{battery.serial_number ?? "—"}</dd></div>
-            <div><dt>Chemistry</dt><dd>{battery.chemistry ?? "—"}</dd></div>
-            <div><dt>Nominal voltage</dt><dd>{formatNumber(battery.nominal_voltage_v, " V")}</dd></div>
-            <div><dt>Rated capacity</dt><dd>{formatNumber(battery.nominal_capacity_ah, " Ah")}</dd></div>
-            <div><dt>Manufacturer</dt><dd>{battery.manufacturer ?? "—"}</dd></div>
-            <div><dt>Commissioned</dt><dd>{formatDate(battery.received_at)}</dd></div>
-            <div><dt>Created</dt><dd>{formatDateTime(battery.created_at)}</dd></div>
-            <div><dt>Updated</dt><dd>{formatDateTime(battery.updated_at)}</dd></div>
+            <div><dt>{t("passport.serial")}</dt><dd>{battery.serial_number ?? "—"}</dd></div>
+            <div><dt>{t("passport.chemistry")}</dt><dd>{battery.chemistry ?? "—"}</dd></div>
+            <div><dt>{t("passport.nominalVoltage")}</dt><dd>{formatNumber(battery.nominal_voltage_v, " V")}</dd></div>
+            <div><dt>{t("passport.ratedCapacity")}</dt><dd>{formatNumber(battery.nominal_capacity_ah, " Ah")}</dd></div>
+            <div><dt>{t("passport.manufacturer")}</dt><dd>{battery.manufacturer ?? "—"}</dd></div>
+            <div><dt>{t("passport.commissioned")}</dt><dd>{formatDate(battery.received_at)}</dd></div>
+            <div><dt>{t("passport.created")}</dt><dd>{formatDateTime(battery.created_at)}</dd></div>
+            <div><dt>{t("passport.updated")}</dt><dd>{formatDateTime(battery.updated_at)}</dd></div>
           </dl>
           <div className="demo-banner">{t("passport.demoBanner")}</div>
         </section>
@@ -293,7 +293,7 @@ export function BatteryDetailPage() {
               {measurements.length === 0 ? <EmptyState title={t("passport.noMeasurement")} detail={t("passport.noMeasurementHint")} /> : (
                 <div className="table-wrap">
                   <table className="data-table">
-                    <thead><tr><th>Metric</th><th>Value</th><th>{t("common.source")}</th><th>{t("common.quality")}</th><th>{t("inspections.inspectedAt")}</th></tr></thead>
+                    <thead><tr><th>{t("common.metric")}</th><th>{t("common.value")}</th><th>{t("common.source")}</th><th>{t("common.quality")}</th><th>{t("inspections.inspectedAt")}</th></tr></thead>
                     <tbody>
                       {measurements.slice(0, 8).map((item) => (
                         <tr key={item.id}>

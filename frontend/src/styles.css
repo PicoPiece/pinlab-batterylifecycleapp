@@ -269,3 +269,30 @@ button, input, select, textarea { font: inherit; }
   .attention-list li { align-items: flex-start; flex-direction: column; }
   .reason-row { justify-content: flex-start; }
 }
+
+/* Access & role administration */
+.access-tabs { display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+.access-tab { border: 1px solid var(--line); background: #fff; color: var(--muted); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.access-tab.active { background: var(--primary-soft); border-color: #c7e7e1; color: var(--primary-dark); }
+.table-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.inline-field { display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.inline-field .select { min-width: 180px; }
+.org-form { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.org-forms { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.mini-panel { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.mini-panel > strong { font-size: .92rem; }
+.assignment-list { display: flex; flex-direction: column; gap: 8px; }
+.assignment-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-bottom: 1px solid #eef2f7; padding-bottom: 7px; }
+.assignment-row:last-child { border-bottom: 0; }
+.assignment-row span { display: flex; flex-direction: column; gap: 2px; }
+.assignment-row small { color: var(--muted); }
+.audit-metadata { display: inline-block; max-width: 360px; overflow-wrap: anywhere; font-size: .68rem; color: var(--muted); }
+.select-sm { padding: 5px 8px; font-size: .74rem; }
+@media (max-width: 640px) {
+  .inline-field { align-items: stretch; flex-direction: column; }
+  .inline-field .select { min-width: 0; width: 100%; }
+}
+.connection-pill { border: 1px solid var(--line); border-radius: 999px; padding: 4px 9px; font-size: .68rem; font-weight: 800; letter-spacing: .04em; }
+.connection-online { background: #ecfdf3; color: #067647; border-color: #abefc6; }
+.connection-offline { background: #fef3f2; color: #b42318; border-color: #fecdca; }
+.sidebar-refresh { display: block; margin-top: 8px; color: var(--muted); font-size: .65rem; }

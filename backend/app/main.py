@@ -9,10 +9,12 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.config import settings
 from app.routers import (
+    assignments,
     attachments,
     auth,
     batteries,
     dashboard,
+    organizations,
     health,
     inspections,
     integrations,
@@ -88,6 +90,8 @@ async def request_context(request: Request, call_next):
 app.include_router(health.router, prefix="/api/v1")
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
+app.include_router(organizations.router, prefix="/api/v1")
+app.include_router(assignments.router, prefix="/api/v1")
 app.include_router(batteries.router, prefix="/api/v1")
 app.include_router(measurements.router, prefix="/api/v1")
 app.include_router(inspections.router, prefix="/api/v1")

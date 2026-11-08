@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.authorization import AccessContext, get_access_context
 from app.database import get_db
-from app.deps import get_current_user, require_writer
-from app.models import LifecycleEvent, LifecycleEventType, User, utcnow
-from app.routers.batteries import get_battery_or_404
+from app.models import LifecycleEvent, LifecycleEventType, utcnow
+from app.routers.batteries import get_battery_for_write_or_404, get_battery_or_404
 from app.schemas import LifecycleEventCreate, LifecycleEventRead, Page
 from app.services.audit import record_event
 
@@ -16,11 +16,11 @@ router = APIRouter(tags=["lifecycle"])
 def list_events(
     battery_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    ctx: AccessContext = Depends(get_access_context),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=100, ge=1, le=200),
 ) -> Page[LifecycleEventRead]:
-    get_battery_or_404(db, battery_id)
+    get_battery_or_404(db, battery_id, ctx)
     total = db.scalar(
         select(func.count()).select_from(LifecycleEvent).where(LifecycleEvent.battery_id == battery_id)
     ) or 0
@@ -45,9 +45,9 @@ def create_event(
     battery_id: int,
     payload: LifecycleEventCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_writer),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> LifecycleEvent:
-    get_battery_or_404(db, battery_id)
+    get_battery_for_write_or_404(db, battery_id, ctx)
     if payload.event_type == LifecycleEventType.status_changed:
         raise HTTPException(
             status_code=400,
@@ -57,7 +57,7 @@ def create_event(
         db,
         battery_id=battery_id,
         event_type=payload.event_type,
-        actor_id=user.id,
+        actor_id=ctx.user.id,
         notes=payload.notes,
         metadata=payload.metadata,
         event_at=payload.event_at or utcnow(),

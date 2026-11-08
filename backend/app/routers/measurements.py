@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.authorization import AccessContext, get_access_context
 from app.database import get_db
-from app.deps import get_current_user, require_writer
-from app.models import Battery, LifecycleEventType, Measurement, MeasurementMetric, User, utcnow
-from app.routers.batteries import get_battery_or_404
+from app.models import LifecycleEventType, Measurement, MeasurementMetric, utcnow
+from app.routers.batteries import get_battery_for_write_or_404, get_battery_or_404
 from app.schemas import MeasurementCreate, MeasurementRead, Page
 from app.services.audit import record_event
 
@@ -16,12 +16,12 @@ router = APIRouter(tags=["measurements"])
 def list_measurements(
     battery_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    ctx: AccessContext = Depends(get_access_context),
     metric: MeasurementMetric | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ) -> Page[MeasurementRead]:
-    get_battery_or_404(db, battery_id)
+    get_battery_or_404(db, battery_id, ctx)
     filters = [Measurement.battery_id == battery_id]
     if metric:
         filters.append(Measurement.metric == metric)
@@ -42,9 +42,9 @@ def list_measurements(
 def latest_measurements(
     battery_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> dict[str, MeasurementRead | None]:
-    get_battery_or_404(db, battery_id)
+    get_battery_or_404(db, battery_id, ctx)
     result: dict[str, MeasurementRead | None] = {metric.value: None for metric in MeasurementMetric}
     for metric in MeasurementMetric:
         item = db.scalar(
@@ -66,9 +66,9 @@ def create_measurement(
     battery_id: int,
     payload: MeasurementCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_writer),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> Measurement:
-    get_battery_or_404(db, battery_id)
+    get_battery_for_write_or_404(db, battery_id, ctx)
     measurement = Measurement(
         battery_id=battery_id,
         metric=payload.metric,
@@ -78,7 +78,7 @@ def create_measurement(
         quality=payload.quality,
         measured_at=payload.measured_at or utcnow(),
         notes=payload.notes,
-        created_by_id=user.id,
+        created_by_id=ctx.user.id,
     )
     db.add(measurement)
     db.flush()
@@ -86,7 +86,7 @@ def create_measurement(
         db,
         battery_id=battery_id,
         event_type=LifecycleEventType.measurement_recorded,
-        actor_id=user.id,
+        actor_id=ctx.user.id,
         notes=f"Ghi nhận {payload.metric.value} = {payload.value} {payload.unit}",
         metadata={
             "metric": payload.metric.value,

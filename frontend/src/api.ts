@@ -1,20 +1,26 @@
 import type {
+  AccessInfo,
   AdminPasswordResetResponse,
   Attachment,
   Battery,
+  BatteryAssignment,
   BatteryPortfolioItem,
   DashboardSummary,
   Inspection,
   InspectionSummary,
   LifecycleEvent,
   Measurement,
+  Membership,
+  Organization,
+  OrganizationRole,
   Page,
   ProviderInfo,
   Role,
+  SecurityAuditEvent,
   User,
 } from "./types";
 
-const BASE = "/api/v1";
+const BASE = (import.meta.env.VITE_API_BASE_URL || "/api/v1").replace(/\/$/, "");
 
 export class ApiError extends Error {
   status: number;
@@ -80,9 +86,11 @@ export const api = {
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   me: () => request<User>("/auth/me"),
+  access: () => request<AccessInfo>("/auth/access"),
   changePassword: (payload: { current_password: string; new_password: string; confirm_password: string }) =>
     request<void>("/auth/change-password", { method: "POST", body: JSON.stringify(payload) }),
 
+  health: () => request<{ status: string; database: string; version: string }>("/health"),
   dashboard: () => request<DashboardSummary>("/dashboard"),
 
   listBatteries: (params: { search?: string; status?: string; page?: number; pageSize?: number }) => {
@@ -154,8 +162,49 @@ export const api = {
   getUsers: () => request<User[]>("/users"),
   createUser: (payload: { email: string; full_name: string; role: Role; password: string }) =>
     request<User>("/users", { method: "POST", body: JSON.stringify(payload) }),
+  updateUser: (userId: number, payload: { full_name?: string; role?: Role; is_active?: boolean }) =>
+    request<User>(`/users/${userId}`, { method: "PATCH", body: JSON.stringify(payload) }),
   resetUserPassword: (userId: number) =>
     request<AdminPasswordResetResponse>(`/users/${userId}/reset-password`, { method: "POST" }),
+
+  listOrganizations: () => request<Organization[]>("/organizations"),
+  createOrganization: (payload: { slug: string; name: string; kind: "agency" | "pinlab" }) =>
+    request<Organization>("/organizations", { method: "POST", body: JSON.stringify(payload) }),
+  listMemberships: (organizationId: number) =>
+    request<Membership[]>(`/organizations/${organizationId}/memberships`),
+  createMembership: (organizationId: number, payload: { user_id: number; role: OrganizationRole }) =>
+    request<Membership>(`/organizations/${organizationId}/memberships`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  updateMembership: (membershipId: number, payload: { role?: OrganizationRole; is_active?: boolean }) =>
+    request<Membership>(`/organizations/memberships/${membershipId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  createOrganizationUser: (
+    organizationId: number,
+    payload: { email: string; full_name: string; password: string; role: OrganizationRole },
+  ) =>
+    request<User>(`/organizations/${organizationId}/users`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  resetOrganizationUserPassword: (organizationId: number, userId: number) =>
+    request<AdminPasswordResetResponse>(`/organizations/${organizationId}/users/${userId}/reset-password`, {
+      method: "POST",
+    }),
+  listAudit: (organizationId: number) =>
+    request<SecurityAuditEvent[]>(`/organizations/${organizationId}/audit`),
+  listAssignments: (batteryId: number) =>
+    request<BatteryAssignment[]>(`/batteries/${batteryId}/assignments`),
+  createAssignment: (batteryId: number, userId: number) =>
+    request<BatteryAssignment>(`/batteries/${batteryId}/assignments`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    }),
+  endAssignment: (assignmentId: number) =>
+    request<void>(`/assignments/${assignmentId}`, { method: "DELETE" }),
 
   getProviders: () => request<ProviderInfo[]>("/integrations/providers"),
 };

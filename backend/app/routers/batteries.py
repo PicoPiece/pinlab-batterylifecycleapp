@@ -3,16 +3,19 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.authorization import AccessContext, forbid, get_access_context
 from app.database import get_db
-from app.deps import get_current_user, require_admin, require_writer
 from app.models import (
     Attachment,
     Battery,
+    BatteryAssignment,
     BatteryStatus,
     Inspection,
     LifecycleEventType,
     Measurement,
     MeasurementMetric,
+    Organization,
+    OrganizationRole,
     User,
 )
 from app.schemas import (
@@ -25,27 +28,43 @@ from app.schemas import (
     Page,
 )
 from app.services.audit import record_event
+from app.services.security_audit import record_security_event
 
 router = APIRouter(prefix="/batteries", tags=["batteries"])
 
 
-def get_battery_or_404(db: Session, battery_id: int, include_deleted: bool = False) -> Battery:
+def get_battery_or_404(
+    db: Session,
+    battery_id: int,
+    ctx: AccessContext,
+    include_deleted: bool = False,
+) -> Battery:
     battery = db.get(Battery, battery_id)
-    if not battery or (battery.is_deleted and not include_deleted):
-        raise HTTPException(status_code=404, detail="Không tìm thấy pin")
+    if not battery or (battery.is_deleted and not include_deleted) or not ctx.can_read_battery(battery):
+        raise forbid()
+    return battery
+
+
+def get_battery_for_write_or_404(db: Session, battery_id: int, ctx: AccessContext) -> Battery:
+    battery = get_battery_or_404(db, battery_id, ctx)
+    if not ctx.can_write_battery(battery):
+        raise forbid()
     return battery
 
 
 @router.get("", response_model=Page[BatteryRead])
 def list_batteries(
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    ctx: AccessContext = Depends(get_access_context),
     search: str | None = Query(default=None, max_length=120),
     status_filter: BatteryStatus | None = Query(default=None, alias="status"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
 ) -> Page[BatteryRead]:
     filters = [Battery.is_deleted.is_(False)]
+    scope = ctx.battery_filter()
+    if scope is not None:
+        filters.append(scope)
     if status_filter:
         filters.append(Battery.status == status_filter)
     if search:
@@ -75,13 +94,17 @@ def list_batteries(
 @router.get("/portfolio", response_model=list[BatteryPortfolioItem])
 def list_battery_portfolio(
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> list[BatteryPortfolioItem]:
     """Read-only fleet view with latest evidence/measurement metadata."""
+    filters = [Battery.is_deleted.is_(False)]
+    scope = ctx.battery_filter()
+    if scope is not None:
+        filters.append(scope)
     batteries = list(
         db.scalars(
             select(Battery)
-            .where(Battery.is_deleted.is_(False))
+            .where(*filters)
             .order_by(Battery.updated_at.desc(), Battery.id.desc())
         ).all()
     )
@@ -150,12 +173,25 @@ def list_battery_portfolio(
 def create_battery(
     payload: BatteryCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_writer),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> Battery:
+    organization_id = payload.organization_id
+    if organization_id is None and (ctx.is_super_admin or ctx.is_manager):
+        internal = db.scalar(select(Organization).where(Organization.slug == "pinlab-internal"))
+        organization_id = internal.id if internal else None
+    elif organization_id is None and len(ctx.organization_ids) == 1:
+        organization_id = next(iter(ctx.organization_ids))
+    if organization_id is None or not ctx.can_create_battery_in_org(organization_id):
+        raise HTTPException(status_code=403, detail="Không có quyền thực hiện")
+    organization = db.get(Organization, organization_id)
+    if not organization or not organization.is_active:
+        raise HTTPException(status_code=400, detail="Organization không hợp lệ")
+
     battery = Battery(
-        **payload.model_dump(),
-        created_by_id=user.id,
-        updated_by_id=user.id,
+        **payload.model_dump(exclude={"organization_id"}),
+        organization_id=organization_id,
+        created_by_id=ctx.user.id,
+        updated_by_id=ctx.user.id,
     )
     db.add(battery)
     try:
@@ -163,15 +199,36 @@ def create_battery(
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="Asset ID đã tồn tại")
+    # A PinLab technician creating an asset receives an explicit assignment.
+    if any(
+        m.role == OrganizationRole.pinlab_technician and m.organization_id == organization_id
+        for m in ctx.memberships
+    ):
+        db.add(
+            BatteryAssignment(
+                battery_id=battery.id,
+                user_id=ctx.user.id,
+                assigned_by_id=ctx.user.id,
+            )
+        )
 
     event_type = LifecycleEventType.received if battery.status == BatteryStatus.received else LifecycleEventType.status_changed
     record_event(
         db,
         battery_id=battery.id,
         event_type=event_type,
-        actor_id=user.id,
+        actor_id=ctx.user.id,
         notes="Pin được đăng ký vào hệ thống",
         metadata={"asset_id": battery.asset_id, "initial_status": battery.status.value},
+    )
+    record_security_event(
+        db,
+        actor_id=ctx.user.id,
+        action="battery.create",
+        target_type="battery",
+        target_id=battery.id,
+        organization_id=organization_id,
+        metadata={"asset_id": battery.asset_id, "manager": ctx.is_manager},
     )
     db.commit()
     db.refresh(battery)
@@ -182,9 +239,9 @@ def create_battery(
 def get_battery(
     battery_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> Battery:
-    return get_battery_or_404(db, battery_id)
+    return get_battery_or_404(db, battery_id, ctx)
 
 
 @router.patch("/{battery_id}", response_model=BatteryRead)
@@ -192,15 +249,22 @@ def update_battery(
     battery_id: int,
     payload: BatteryUpdate,
     db: Session = Depends(get_db),
-    user: User = Depends(require_writer),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> Battery:
-    battery = get_battery_or_404(db, battery_id)
+    battery = get_battery_for_write_or_404(db, battery_id, ctx)
     data = payload.model_dump(exclude_unset=True)
     old_status = battery.status
+    old_organization_id = battery.organization_id
+    if "organization_id" in data and data["organization_id"] != battery.organization_id:
+        if not (ctx.is_super_admin or ctx.is_manager):
+            raise forbid()
+        organization = db.get(Organization, data["organization_id"]) if data["organization_id"] else None
+        if not organization or not organization.is_active:
+            raise HTTPException(status_code=400, detail="Organization không hợp lệ")
 
     for key, value in data.items():
         setattr(battery, key, value)
-    battery.updated_by_id = user.id
+    battery.updated_by_id = ctx.user.id
 
     try:
         db.flush()
@@ -213,9 +277,29 @@ def update_battery(
             db,
             battery_id=battery.id,
             event_type=LifecycleEventType.status_changed,
-            actor_id=user.id,
+            actor_id=ctx.user.id,
             notes=f"Trạng thái: {old_status.value} → {battery.status.value}",
             metadata={"from": old_status.value, "to": battery.status.value},
+        )
+    if old_organization_id != battery.organization_id:
+        record_security_event(
+            db,
+            actor_id=ctx.user.id,
+            action="battery.organization.reassign",
+            target_type="battery",
+            target_id=battery.id,
+            organization_id=battery.organization_id,
+            metadata={"from": old_organization_id, "to": battery.organization_id},
+        )
+    elif ctx.is_manager:
+        record_security_event(
+            db,
+            actor_id=ctx.user.id,
+            action="battery.update",
+            target_type="battery",
+            target_id=battery.id,
+            organization_id=battery.organization_id,
+            metadata={"manager": True},
         )
 
     db.commit()
@@ -227,17 +311,28 @@ def update_battery(
 def delete_battery(
     battery_id: int,
     db: Session = Depends(get_db),
-    user: User = Depends(require_admin),
+    ctx: AccessContext = Depends(get_access_context),
 ) -> None:
-    battery = get_battery_or_404(db, battery_id)
+    battery = get_battery_for_write_or_404(db, battery_id, ctx)
+    if not (ctx.is_super_admin or ctx.is_manager or ctx.is_agency_admin):
+        raise HTTPException(status_code=403, detail="Không có quyền thực hiện")
     battery.is_deleted = True
     battery.status = BatteryStatus.retired
-    battery.updated_by_id = user.id
+    battery.updated_by_id = ctx.user.id
     record_event(
         db,
         battery_id=battery.id,
         event_type=LifecycleEventType.retired,
-        actor_id=user.id,
+        actor_id=ctx.user.id,
         notes="Pin bị xóa mềm khỏi registry",
+    )
+    record_security_event(
+        db,
+        actor_id=ctx.user.id,
+        action="battery.delete",
+        target_type="battery",
+        target_id=battery.id,
+        organization_id=battery.organization_id,
+        metadata={"asset_id": battery.asset_id},
     )
     db.commit()

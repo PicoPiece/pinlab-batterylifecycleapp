@@ -1,7 +1,7 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { Loading } from "../components/States";
 import type { Battery, InspectionResult } from "../types";
@@ -22,13 +22,13 @@ export function InspectionPage() {
   const { id } = useParams();
   const batteryId = Number(id);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { canWrite } = useAuth();
   const { t } = useI18n();
   const [battery, setBattery] = useState<Battery | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [testType, setTestType] = useState("Visual inspection");
+  const [testType, setTestType] = useState(t("inspectionForm.defaultType"));
   const [inspectedAt, setInspectedAt] = useState(localNow());
   const [result, setResult] = useState<InspectionResult>("passed");
   const [notes, setNotes] = useState("");
@@ -38,6 +38,39 @@ export function InspectionPage() {
     { key: "temperature", value: "" },
   ]);
   const [file, setFile] = useState<File | undefined>();
+  const draftKey = `pinlab-inspection-draft:${batteryId}`;
+  const [draftReady, setDraftReady] = useState(false);
+  const dirtyRef = useRef(false);
+
+  useEffect(() => {
+    if (!Number.isFinite(batteryId)) return;
+    try {
+      const saved = sessionStorage.getItem(draftKey);
+      if (saved) {
+        const draft = JSON.parse(saved) as Partial<{
+          testType: string;
+          inspectedAt: string;
+          result: InspectionResult;
+          notes: string;
+          parameters: ParameterRow[];
+        }>;
+        if (typeof draft.testType === "string") setTestType(draft.testType);
+        if (typeof draft.inspectedAt === "string") setInspectedAt(draft.inspectedAt);
+        if (draft.result && RESULTS.includes(draft.result)) setResult(draft.result);
+        if (typeof draft.notes === "string") setNotes(draft.notes);
+        if (Array.isArray(draft.parameters) && draft.parameters.length > 0) setParameters(draft.parameters);
+      }
+    } catch {
+      // Ignore stale or malformed drafts.
+    } finally {
+      setDraftReady(true);
+    }
+  }, [batteryId, draftKey]);
+
+  useEffect(() => {
+    if (!draftReady || !dirtyRef.current) return;
+    sessionStorage.setItem(draftKey, JSON.stringify({ testType, inspectedAt, result, notes, parameters }));
+  }, [draftReady, draftKey, testType, inspectedAt, result, notes, parameters]);
 
   useEffect(() => {
     if (!Number.isFinite(batteryId)) return;
@@ -52,7 +85,7 @@ export function InspectionPage() {
     };
   }, [batteryId]);
 
-  if (!canWrite(user?.role)) {
+  if (!canWrite) {
     return (
       <div className="state-box state-error">
         <strong>{t("inspectionForm.noPermission")}</strong>
@@ -85,6 +118,7 @@ export function InspectionPage() {
         notes: notes.trim() || null,
       });
       if (file) await api.uploadInspectionAttachment(inspection.id, file);
+      sessionStorage.removeItem(draftKey);
       navigate(`/batteries/${batteryId}`);
     } catch (err) {
       setError(err instanceof ApiError ? err.detail : "Unable to save inspection");
@@ -104,7 +138,7 @@ export function InspectionPage() {
         <Link className="btn btn-ghost" to={`/batteries/${batteryId}`}>← {t("inspectionForm.back")}</Link>
       </div>
 
-      <form className="card form-card" onSubmit={onSubmit}>
+      <form className="card form-card inspection-form" onSubmit={onSubmit} onChange={() => { dirtyRef.current = true; }}>
         <div className="form-grid">
           <label className="field"><span>{t("inspectionForm.testType")} *</span><input className="input" value={testType} onChange={(event) => setTestType(event.target.value)} required /></label>
           <label className="field"><span>{t("inspectionForm.date")}</span><input className="input" type="datetime-local" value={inspectedAt} onChange={(event) => setInspectedAt(event.target.value)} /></label>
@@ -113,13 +147,19 @@ export function InspectionPage() {
               {RESULTS.map((value) => <option key={value} value={value}>{t(`result.${value}`)}</option>)}
             </select>
           </label>
-          <label className="field"><span>{t("inspectionForm.evidence")}</span><input className="input" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(event) => setFile(event.target.files?.[0])} /></label>
+          <label className="field">
+            <span>{t("inspectionForm.evidence")}</span>
+            <span className="file-picker">
+              <span className="btn btn-ghost btn-full">{file?.name ?? t("inspectionForm.chooseFile")}</span>
+              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={(event) => setFile(event.target.files?.[0])} />
+            </span>
+          </label>
         </div>
 
         <div className="section-block">
           <div className="section-head">
             <div><span className="eyebrow">{t("inspectionForm.measured")}</span><h3>{t("inspectionForm.measured")}</h3></div>
-            <button type="button" className="btn btn-ghost" onClick={() => setParameters((rows) => [...rows, { key: "", value: "" }])}>{t("inspectionForm.addRow")}</button>
+            <button type="button" className="btn btn-ghost" onClick={() => { dirtyRef.current = true; setParameters((rows) => [...rows, { key: "", value: "" }]); }}>{t("inspectionForm.addRow")}</button>
           </div>
           <p className="muted small">{t("inspectionForm.measuredHint")}</p>
           <div className="parameter-list">
@@ -127,7 +167,7 @@ export function InspectionPage() {
               <div className="parameter-row" key={index}>
                 <input className="input" placeholder={t("inspectionForm.parameter")} value={row.key} onChange={(event) => updateParameter(index, "key", event.target.value)} />
                 <input className="input" placeholder={t("inspectionForm.value")} value={row.value} onChange={(event) => updateParameter(index, "value", event.target.value)} />
-                <button type="button" className="btn btn-ghost" onClick={() => setParameters((rows) => rows.filter((_, i) => i !== index))}>{t("inspectionForm.remove")}</button>
+                <button type="button" className="btn btn-ghost" onClick={() => { dirtyRef.current = true; setParameters((rows) => rows.filter((_, i) => i !== index)); }}>{t("inspectionForm.remove")}</button>
               </div>
             ))}
           </div>

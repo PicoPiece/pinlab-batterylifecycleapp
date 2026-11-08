@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError, api } from "../api";
-import { canWrite, useAuth } from "../auth";
+import { useAuth } from "../auth";
 import { useI18n } from "../i18n";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { StatusBadge } from "../components/StatusBadge";
@@ -11,7 +11,7 @@ import type { Attachment, Battery, Inspection } from "../types";
 export function InspectionDetailPage() {
   const { id } = useParams();
   const inspectionId = Number(id);
-  const { user } = useAuth();
+  const { canWrite } = useAuth();
   const { t } = useI18n();
   const [inspection, setInspection] = useState<Inspection | null>(null);
   const [battery, setBattery] = useState<Battery | null>(null);
@@ -62,7 +62,7 @@ export function InspectionDetailPage() {
   if (error) return <ErrorState message={error} />;
   if (!inspection) return <EmptyState title={t("inspections.noInspections")} />;
 
-  const writer = canWrite(user?.role);
+  const writer = canWrite;
   const evidenceReady = attachments.length > 0;
   const measured = Object.entries(inspection.measured_parameters ?? {});
 

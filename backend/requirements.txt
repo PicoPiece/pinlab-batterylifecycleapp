@@ -8,6 +8,8 @@ PyJWT==2.15.1
 argon2-cffi==25.1.0
 python-multipart==0.0.32
 email-validator==2.3.0
+paho-mqtt==2.1.0
+jsonschema==4.25.1
 
 # Test-only dependencies are installed in the development/test environment.
 pytest==9.2.0

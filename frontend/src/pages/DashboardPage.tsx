@@ -8,15 +8,16 @@ import { StatusBadge } from "../components/StatusBadge";
 import { formatDateTime, formatNumber } from "../format";
 import type { BatteryPortfolioItem, DashboardSummary } from "../types";
 
-function percent(value: number | null | undefined): string {
-  return value === null || value === undefined ? "No Data" : `${formatNumber(value, "%")}`;
+function percent(value: number | null | undefined, noDataLabel: string): string {
+  return value === null || value === undefined ? noDataLabel : `${formatNumber(value, "%")}`;
 }
 
 export function DashboardPage() {
-  const { user } = useAuth();
+  const { user, canWrite } = useAuth();
   const { t } = useI18n();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [portfolio, setPortfolio] = useState<BatteryPortfolioItem[]>([]);
+  const [mobileSearch, setMobileSearch] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +39,16 @@ export function DashboardPage() {
 
   const highCount = data?.needs_attention.filter((item) => item.severity === "high").length ?? 0;
   const reviewCount = data?.needs_attention.filter((item) => item.severity === "review").length ?? 0;
+
+  const mobileMatches = useMemo(() => {
+    const query = mobileSearch.trim().toLowerCase();
+    if (!query) return [];
+    return portfolio.filter((asset) =>
+      [asset.asset_id, asset.serial_number, asset.model, asset.manufacturer]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query)),
+    ).slice(0, 6);
+  }, [mobileSearch, portfolio]);
 
   const provenance = useMemo(() => {
     const counts = { manual: 0, mock: 0, telemetry: 0, none: 0 };
@@ -61,7 +72,88 @@ export function DashboardPage() {
   const spotlight = portfolio.slice(0, 5);
 
   return (
-    <div className="stack-lg">
+    <div className="stack-lg dashboard-page">
+      <section className="mobile-home" aria-label={t("mobile.home")}>
+        <div className="mobile-home-head">
+          <div>
+            <span className="eyebrow">{t("mobile.home")}</span>
+            <h2>{t("mobile.greeting", { name: user?.full_name ?? "PinLab" })}</h2>
+          </div>
+          {canWrite ? (
+            <Link className="btn btn-primary" to="/batteries">{t("mobile.createInspection")}</Link>
+          ) : null}
+        </div>
+
+        <label className="mobile-search">
+          <span className="mobile-search-icon" aria-hidden="true">⌕</span>
+          <span className="sr-only">{t("common.search")}</span>
+          <input
+            className="input"
+            type="search"
+            value={mobileSearch}
+            onChange={(event) => setMobileSearch(event.target.value)}
+            placeholder={t("mobile.searchPlaceholder")}
+            autoComplete="off"
+          />
+        </label>
+
+        {mobileSearch.trim() ? (
+          <div className="mobile-section">
+            <div className="mobile-section-head">
+              <h3>{t("mobile.searchResults")}</h3>
+              <span className="small muted">{mobileMatches.length}</span>
+            </div>
+            {mobileMatches.length === 0 ? (
+              <div className="note-box">
+                <strong>{t("mobile.noSearchResults")}</strong>
+                <div>{t("mobile.noSearchHint")}</div>
+              </div>
+            ) : (
+              <div className="mobile-search-results">
+                {mobileMatches.map((asset) => (
+                  <Link className="mobile-result" key={asset.id} to={`/batteries/${asset.id}`}>
+                    <div className="mobile-result-main">
+                      <strong>{asset.asset_id}</strong>
+                      <span>{asset.model ?? asset.serial_number ?? "—"}</span>
+                    </div>
+                    <div className="mobile-result-side">
+                      <strong>{asset.latest.soc ? formatNumber(asset.latest.soc.value, "%") : t("common.noData")}</strong>
+                      <small>SOC · {asset.latest.soh ? formatNumber(asset.latest.soh.value, "%") : t("common.noData")} SOH</small>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mobile-section">
+            <div className="mobile-section-head">
+              <h3>{t("mobile.attention")}</h3>
+              <Link className="text-link" to="/inspections">{t("mobile.viewQueue")} →</Link>
+            </div>
+            <div className="mobile-attention-list">
+              {attention.slice(0, 3).map((item) => (
+                <Link className="mobile-attention-item" key={item.battery_id} to={`/batteries/${item.battery_id}`}>
+                  <div className="mobile-attention-main">
+                    <strong>{item.asset_id}</strong>
+                    <span>{item.reasons.map((reason) => t(`attention.${reason}`)).join(" · ")}</span>
+                  </div>
+                  <span className={`badge badge-${item.severity === "high" ? "quarantined" : item.severity === "review" ? "inspecting" : "tested"}`}>
+                    {item.severity === "high" ? t("common.high") : item.severity === "review" ? t("common.review") : t("common.data")}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mobile-quick-actions">
+          <Link className="btn btn-primary" to="/batteries">{t("mobile.assets")}</Link>
+          <Link className="btn btn-ghost" to="/inspections">{t("mobile.inspections")}</Link>
+        </div>
+        <p className="mobile-demo-note">{t("mobile.demoNote")}</p>
+      </section>
+
       <div className="page-intro">
         <div>
           <span className="eyebrow">{t("dashboard.kicker")}</span>
@@ -121,17 +213,17 @@ export function DashboardPage() {
             <div className="component-row">
               <span>{t("dashboard.weightedSoh")}</span>
               <div className="component-track"><i style={{ width: `${health.weighted_soh ?? 0}%` }} /></div>
-              <strong>{percent(health.weighted_soh)}</strong>
+              <strong>{percent(health.weighted_soh, t("common.noData"))}</strong>
             </div>
             <div className="component-row">
               <span>{t("dashboard.dataCoverage")}</span>
               <div className="component-track"><i style={{ width: `${health.data_coverage}%` }} /></div>
-              <strong>{percent(health.data_coverage)}</strong>
+              <strong>{percent(health.data_coverage, t("common.noData"))}</strong>
             </div>
             <div className="component-row">
               <span>{t("dashboard.inspectionCurrency")}</span>
               <div className="component-track"><i style={{ width: `${health.inspection_currency}%` }} /></div>
-              <strong>{percent(health.inspection_currency)}</strong>
+              <strong>{percent(health.inspection_currency, t("common.noData"))}</strong>
             </div>
           </div>
         </section>
@@ -196,7 +288,7 @@ export function DashboardPage() {
                       <Link className="table-link" to={`/batteries/${asset.id}`}>{asset.asset_id}</Link>
                       <div className="subtext">{asset.model ?? asset.serial_number ?? "—"}</div>
                     </td>
-                    <td><strong>{percent(asset.latest.soh?.value)}</strong></td>
+                    <td><strong>{percent(asset.latest.soh?.value, t("common.noData"))}</strong></td>
                     <td><StatusBadge status={asset.status} /></td>
                     <td>
                       <span className={`source-dot source-${asset.latest.soh?.source ?? "none"}`} />
