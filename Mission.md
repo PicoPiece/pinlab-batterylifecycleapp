@@ -239,5 +239,5 @@
 - **Branch:** `mission-017-server-mqtt`
 - **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`.
 - **Tests:** Backend 44/44 PASS; dev Mosquitto auth/ACL, WebSocket QoS 1, PostgreSQL persistence/dedup, broker/consumer reconnect and retention tests PASS.
-- **External WSS:** `wss://mqtt-pinlab.picopiece.com/mqtt` verified 2026-11-08; DNS/TLS/WebSocket/QoS 1/auth/persistence PASS. Existing app and OpenProject routes remained healthy. Real ESP32 telemetry remains untested.
+- **External WSS:** `wss://mqtt-pinlab.picopiece.com/mqtt` verified 2026-11-08; DNS/TLS/WebSocket/QoS 1/auth/persistence PASS; ACL denial and broker-reconnect stability PASS. Existing app and OpenProject routes remained healthy. Real ESP32 telemetry remains untested.
 - **Next:** CTO approves public WSS route/access policy; ESP32 Agent receives schema, broker URI, credentials via secure channel and registered Gateway ID.

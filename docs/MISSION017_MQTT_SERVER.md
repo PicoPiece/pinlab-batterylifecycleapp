@@ -301,3 +301,15 @@ Final ESP32 handoff:
 - Schema: `backend/app/mqtt/schema/telemetry-v1.schema.json`
 - Credentials: per-device password via secure channel; no password in Git.
 - Test source: `SIMULATED`; real hardware remains unverified.
+
+## 14. Re-verification after Cloudflare route (2026-11-08)
+
+- Public TLS: wildcard `*.picopiece.com`, valid through 2027-01-28.
+- WebSocket/MQTT external QoS 1: PASS.
+- Valid external message `verify-wss-1794124282` persisted as dev sample id 9.
+- Unauthorized topic with MQTT v5: broker returned **Not authorized**; no sample persisted.
+- Dev broker restart: consumer reconnected and stored three stability messages
+  (`stability-1794124309-0`, `...317-1`, `...325-2`) over separate publishes.
+- Existing PinLab app and OpenProject routes: app health 200, OpenProject login 200.
+- No credentials found in broker/consumer logs.
+- No public 1883/8883; broker remains loopback/Tunnel-only.
