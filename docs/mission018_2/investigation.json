@@ -1,0 +1,98 @@
+{
+  "base": "https://pinlab-app.picopiece.com",
+  "generated_at": "2026-11-08T17:18:18.264Z",
+  "checks": {
+    "chart": {
+      "cellButtons": 16,
+      "lineCount": 17,
+      "pathCount": 17,
+      "checkboxes": 16,
+      "checked": 16
+    },
+    "api": {
+      "latest_message_matches_db": true,
+      "latest_id_matches_db": true,
+      "source": "REAL_BMS",
+      "battery_id": 17,
+      "gateway_id": "GW-000001",
+      "cell_count": 16,
+      "cell_01_index_0": true,
+      "cell_16_index_15": true,
+      "api_cells_equal_db": true,
+      "unique_values": [
+        3278,
+        3280,
+        3281
+      ],
+      "groups": [
+        {
+          "value": 3278,
+          "count": 1
+        },
+        {
+          "value": 3280,
+          "count": 10
+        },
+        {
+          "value": 3281,
+          "count": 5
+        }
+      ],
+      "min": 3278,
+      "max": 3281,
+      "min_index": 16,
+      "max_index": 5,
+      "average": 3280.19,
+      "delta": 3,
+      "expected_min": 3278,
+      "expected_max": 3281,
+      "expected_delta": 3,
+      "h1_points": 358,
+      "h1_cells": 358,
+      "h1_first_cell_len": 16,
+      "h1_last_cell_len": 16,
+      "h1_temps_len": 5,
+      "h24_points": 19,
+      "h24_cells": 19,
+      "h24_first_cell_len": 16,
+      "h24_last_cell_len": 16
+    }
+  },
+  "database": {
+    "id": 536,
+    "message_id": "GW-000001:boot25:375",
+    "source": "REAL_BMS",
+    "cells": [
+      3280,
+      3280,
+      3280,
+      3280,
+      3281,
+      3280,
+      3281,
+      3281,
+      3280,
+      3280,
+      3281,
+      3280,
+      3281,
+      3280,
+      3280,
+      3278
+    ],
+    "temperatures": [
+      32.8,
+      30.1,
+      29.7,
+      30,
+      30.2
+    ],
+    "measured_at": "2026-11-08 17:18:11+00",
+    "received_at": "2026-11-08 17:18:17.685746+00",
+    "voltage": 52.53,
+    "current": 0,
+    "soc": 35.42,
+    "remaining": 35.42,
+    "full": 100
+  }
+}

@@ -419,6 +419,85 @@ class TelemetryHistoryRead(BaseModel):
     generated_at: datetime
 
 
+class DiagnosticStatsRead(BaseModel):
+    count: int
+    min: float | None
+    max: float | None
+    avg: float | None
+    stddev: float | None
+    unit: str
+
+
+class DiagnosticPackStatsRead(BaseModel):
+    pack_voltage: DiagnosticStatsRead
+    pack_current: DiagnosticStatsRead
+    peak_abs_current_a: float | None
+    soc: DiagnosticStatsRead
+    capacity_remaining_ah: DiagnosticStatsRead
+    capacity_full_ah: DiagnosticStatsRead
+    temperature_min_c: float | None
+    temperature_max_c: float | None
+
+
+class DiagnosticCellStatsRead(BaseModel):
+    cell_index: int
+    cell_voltage: DiagnosticStatsRead
+
+
+class DiagnosticTemperatureStatsRead(BaseModel):
+    sensor_index: int
+    temperature: DiagnosticStatsRead
+
+
+class DiagnosticGapRead(BaseModel):
+    previous_measured_at: datetime
+    next_measured_at: datetime
+    duration_seconds: float
+    missing_sample_estimate: int
+
+
+class DiagnosticProvenanceRead(BaseModel):
+    source: str | None
+    protocol: str | None
+    time_quality: list[str]
+    gateway_id: str | None
+    battery_slot: int | None
+    assignment_assigned_at: datetime | None
+    verified_source_only: bool = True
+
+
+class DiagnosticEvidenceRead(BaseModel):
+    schema_version: str
+    generated_at: datetime
+    battery_id: int
+    asset_id: str
+    organization_id: int | None
+    battery_classification: BatteryClassification | None
+    gateway_id: str | None
+    battery_slot: int | None
+    range: Literal["1h", "24h", "7d"]
+    from_at: datetime
+    to_at: datetime
+    monitoring_from_at: datetime | None
+    monitoring_to_at: datetime | None
+    completeness_basis: str
+    latest_measured_at: datetime | None
+    latest_received_at: datetime | None
+    sample_count: int
+    expected_sample_count: int
+    data_completeness_pct: float
+    expected_interval_seconds: int
+    time_quality: list[str]
+    pack: DiagnosticPackStatsRead
+    cells: list[DiagnosticCellStatsRead]
+    cell_delta: DiagnosticStatsRead
+    temperatures: list[DiagnosticTemperatureStatsRead]
+    measurement_gaps: list[DiagnosticGapRead]
+    gap_threshold_seconds: int
+    provenance: DiagnosticProvenanceRead
+    limitations: list[str]
+
+
 class StatusCount(BaseModel):
     status: BatteryStatus
     count: int

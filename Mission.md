@@ -325,3 +325,24 @@
 - API latest matched PostgreSQL row 447: SOC 35.42%, 52.531 V, 0 A, 35.420/100 Ah, delta 3 mV.
 - Production Web E2E: **12/12 analytics checks + 4/4 classification checks PASS**, 0 console errors, 390px mobile no horizontal overflow.
 - App/OpenProject health HTTP 200; backend/frontend/DB/consumer healthy. Android native acceptance remains pending because the Java/Gradle toolchain is unavailable.
+
+### Mission 018.2 — 16-Cell Chart Visualization Verification
+
+- **Project:** BatteryLifecycleApp / Web & Android
+- **Scope:** Read-only verification of the 16-cell analytics series mapping and overlap, followed by development-only cell-chart UX improvements.
+- **Status:** **IMPLEMENTED / TESTED / LOCAL PRODUCTION-COPY VERIFIED; NOT DEPLOYED**.
+- **Branch:** `mission-018.2-cell-chart-ux`
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4
+- **Evidence:** `docs/MISSION018_2_CELL_CHART_UX.md`, `docs/mission018_2/`, `frontend/e2e/mission018-2-cell-chart.mjs`.
+
+#### Report
+
+- Root cause confirmed: 16 series are present; production cells legitimately form three voltage groups (3278 ×1, 3280 ×10, 3281 ×5), so absolute lines overlap.
+- API latest matched PostgreSQL row; Cell 01 maps to index 0 and Cell 16 to index 15; all 16 values, five temperatures, min/max/average/delta verified. 1h and 24h histories retain 16 cell values per point.
+- All 16 chart line components are mounted; total Cell-tab lines also include the separate delta chart.
+- Added selected-cell highlighting above overlapping absolute lines, dimmed non-selected lines, complete synchronized tooltips (including identical values), overlap explanation, optional relative-to-average mode preserving actual tooltips, and mobile-safe tooltip sizing.
+- Added authenticated `GET /batteries/{id}/telemetry/evidence?range=1h|24h|7d` contract `diagnostic-evidence-v1`: bounded raw statistics, per-cell/temperature statistics, gaps, completeness, provenance and limitations. Example: `docs/mission018_2/example-evidence.json`.
+- Review correction: completeness uses the effective active Gateway assignment window (`monitoring_from_at`/`monitoring_to_at`), not pre-assignment time; no assignment is reported explicitly rather than as an outage.
+- Mobile: 360/390/430px verified, one Overview chart at a time, collapsible cell picker, touch-sized controls and health-first ordering. No production deployment.
+- Existing Min/Max/Avg, All 16, custom selection, cell delta and 1h/24h/7d behavior preserved.
+- Tests: **64 backend tests passed**, **14 frontend tests passed**, Mission 018.2 E2E **5/5 passed**, plus Mission 018 regression **12/12** and Mission 018.1 **4/4**; before/after screenshots captured. No production deployment or data mutation.

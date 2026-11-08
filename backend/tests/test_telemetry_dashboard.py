@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from app.main import app
 from app.models import (
     Battery,
@@ -187,6 +188,9 @@ def test_raw_hour_history_keeps_cells_and_temperatures(admin_client, db, admin, 
     assert body["point_count"] == 2
     assert [point["cell_delta_mv"] for point in body["pack"]] == [20.0, 10.0]
     assert all(len(point["avg_mv"]) == 16 for point in body["cells"])
+    assert body["cells"][0]["avg_mv"][0] == 3300
+    assert body["cells"][0]["avg_mv"][3] == 3280
+    assert body["cells"][0]["avg_mv"][15] == 3300
     assert all(len(point["values_c"]) == 5 for point in body["temperatures"])
     assert body["pack"][0]["measured_at"] < body["pack"][1]["measured_at"]
 
@@ -194,7 +198,8 @@ def test_raw_hour_history_keeps_cells_and_temperatures(admin_client, db, admin, 
 def test_bucketed_history_preserves_extrema_and_per_sample_delta(admin_client, db, admin, pinlab_org):
     battery, gateway = create_mapped_battery(db, admin, pinlab_org, "ANALYTICS-004")
     now = datetime.now(timezone.utc).replace(microsecond=0)
-    bucket_time = now - timedelta(hours=2)
+    bucket_epoch = int((now - timedelta(hours=2)).timestamp() // 300) * 300
+    bucket_time = datetime.fromtimestamp(bucket_epoch, tz=timezone.utc)
     make_sample(
         db,
         battery,
@@ -341,7 +346,140 @@ def test_cross_organization_telemetry_is_hidden(db, admin, pinlab_org):
     try:
         assert client.get(f"/api/v1/batteries/{battery_a.id}/telemetry/latest").status_code == 200
         assert client.get(f"/api/v1/batteries/{battery_a.id}/telemetry/history").status_code == 200
+        assert client.get(f"/api/v1/batteries/{battery_a.id}/telemetry/evidence").status_code == 200
         assert client.get(f"/api/v1/batteries/{battery_b.id}/telemetry/latest").status_code == 404
         assert client.get(f"/api/v1/batteries/{battery_b.id}/telemetry/history").status_code == 404
+        assert client.get(f"/api/v1/batteries/{battery_b.id}/telemetry/evidence").status_code == 404
     finally:
         client.close()
+
+
+def _evidence_cells(first: int, last: int) -> list[int]:
+    cells = [3280] * 16
+    cells[0] = first
+    cells[15] = last
+    return cells
+
+
+def test_diagnostic_evidence_is_bounded_and_traceable(admin_client, db, admin, pinlab_org):
+    battery, gateway = create_mapped_battery(db, admin, pinlab_org, "EVIDENCE-001")
+    battery.classification = "real"
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    make_sample(
+        db,
+        battery,
+        gateway,
+        message_id="evidence-1",
+        measured_at=now - timedelta(seconds=100),
+        received_at=now - timedelta(seconds=99),
+        cells=_evidence_cells(3278, 3282),
+        temperatures=[30.0, 30.1, 30.2, 30.3, 30.4],
+    )
+    make_sample(
+        db,
+        battery,
+        gateway,
+        message_id="evidence-2",
+        measured_at=now - timedelta(seconds=45),
+        received_at=now - timedelta(seconds=44),
+        cells=_evidence_cells(3280, 3281),
+        temperatures=[31.0, 31.1, 31.2, 31.3, 31.4],
+    )
+    make_sample(
+        db,
+        battery,
+        gateway,
+        message_id="evidence-3",
+        measured_at=now - timedelta(seconds=35),
+        received_at=now - timedelta(seconds=34),
+        cells=_evidence_cells(3281, 3281),
+        temperatures=[32.0, 32.1, 32.2, 32.3, 32.4],
+    )
+    # A newer SIMULATED row must not contaminate verified evidence.
+    make_sample(
+        db,
+        battery,
+        gateway,
+        message_id="evidence-simulated",
+        measured_at=now,
+        received_at=now,
+        source="SIMULATED",
+    )
+    db.commit()
+
+    response = admin_client.get(
+        f"/api/v1/batteries/{battery.id}/telemetry/evidence?range=1h"
+    )
+    assert response.status_code == 200, response.text
+    evidence = response.json()
+    assert evidence["schema_version"] == "diagnostic-evidence-v1"
+    assert evidence["battery_id"] == battery.id
+    assert evidence["battery_classification"] == "real"
+    assert evidence["sample_count"] == 3
+    assert evidence["expected_interval_seconds"] == 10
+    assert evidence["data_completeness_pct"] > 0
+    assert evidence["pack"]["pack_voltage"]["unit"] == "V"
+    assert evidence["pack"]["pack_current"]["unit"] == "A"
+    assert evidence["pack"]["peak_abs_current_a"] == 0.0
+    assert evidence["pack"]["temperature_min_c"] == 30.0
+    assert evidence["pack"]["temperature_max_c"] == 32.4
+    assert evidence["cell_delta"]["min"] == 1.0
+    assert evidence["cell_delta"]["max"] == 4.0
+    assert len(evidence["cells"]) == 16
+    assert evidence["cells"][0]["cell_index"] == 1
+    assert evidence["cells"][15]["cell_index"] == 16
+    assert evidence["cells"][0]["cell_voltage"]["min"] == 3278.0
+    assert evidence["cells"][15]["cell_voltage"]["max"] == 3282.0
+    assert len(evidence["temperatures"]) == 5
+    assert evidence["provenance"]["source"] == "REAL_BMS"
+    assert evidence["provenance"]["verified_source_only"] is True
+    assert evidence["provenance"]["gateway_id"] == gateway.gateway_id
+    # 100s -> 45s is a 55s gap over the 30s threshold.
+    assert len(evidence["measurement_gaps"]) == 1
+    assert evidence["measurement_gaps"][0]["duration_seconds"] == 55.0
+    assert any("not cryptographic proof" in item for item in evidence["limitations"])
+
+
+def test_diagnostic_evidence_requires_auth():
+    client = TestClient(app, base_url=TEST_BASE_URL)
+    try:
+        assert client.get("/api/v1/batteries/17/telemetry/evidence").status_code == 401
+    finally:
+        client.close()
+
+
+def test_diagnostic_completeness_uses_assignment_window(admin_client, db, admin, pinlab_org):
+    battery, _ = create_mapped_battery(db, admin, pinlab_org, "EVIDENCE-WINDOW")
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    assignment = db.scalar(
+        select(GatewayBatteryAssignment).where(
+            GatewayBatteryAssignment.battery_id == battery.id,
+            GatewayBatteryAssignment.unassigned_at.is_(None),
+        )
+    )
+    assignment.assigned_at = now - timedelta(minutes=30)
+    db.commit()
+
+    evidence = admin_client.get(
+        f"/api/v1/batteries/{battery.id}/telemetry/evidence?range=24h"
+    ).json()
+    assert evidence["sample_count"] == 0
+    assert evidence["monitoring_from_at"] is not None
+    assert evidence["monitoring_to_at"] is not None
+    assert evidence["completeness_basis"] == "active_gateway_assignment_window"
+    # 30 minutes / 10-second cadence, not the full 24-hour range.
+    assert 180 <= evidence["expected_sample_count"] <= 182
+
+
+def test_diagnostic_evidence_without_telemetry(admin_client, db, admin, pinlab_org):
+    battery, _ = create_mapped_battery(db, admin, pinlab_org, "EVIDENCE-EMPTY")
+    response = admin_client.get(
+        f"/api/v1/batteries/{battery.id}/telemetry/evidence?range=7d"
+    )
+    assert response.status_code == 200
+    evidence = response.json()
+    assert evidence["sample_count"] == 0
+    assert evidence["data_completeness_pct"] == 0.0
+    assert evidence["cells"] == []
+    assert evidence["temperatures"] == []
+    assert evidence["measurement_gaps"] == []

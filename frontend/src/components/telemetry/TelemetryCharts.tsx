@@ -10,8 +10,10 @@ import {
   YAxis,
 } from "recharts";
 import { formatDateTime, formatNumber } from "../../format";
+import { useI18n } from "../../i18n";
 import type { TelemetryRange } from "../../types";
 import type { ChartPoint } from "./telemetryUtils";
+import { groupCellValues } from "./telemetryUtils";
 
 export interface SeriesSpec {
   key: string;
@@ -19,6 +21,7 @@ export interface SeriesSpec {
   color: string;
   dashed?: boolean;
   width?: number;
+  opacity?: number;
 }
 
 interface TooltipEntry {
@@ -67,42 +70,52 @@ interface CellTooltipProps {
   payload?: TooltipEntry[];
   label?: string | number;
   selectedCell: number | null;
+  cellKeys?: number[];
+  relativeMode?: boolean;
 }
 
-function CellTooltip({ active, payload, label, selectedCell }: CellTooltipProps) {
+function CellTooltip({ active, payload, label, selectedCell, cellKeys, relativeMode = false }: CellTooltipProps) {
+  const { t } = useI18n();
   if (!active || !payload?.length || label === undefined) return null;
   const row = payload[0]?.payload;
   if (!row) return null;
-  const values = Array.from({ length: 16 }, (_, index) => ({
-    index,
-    value: row[`c${index + 1}`],
-  })).filter((item): item is { index: number; value: number } => typeof item.value === "number");
+  const keys = cellKeys?.length ? cellKeys : Array.from({ length: 16 }, (_, index) => index);
+  const values = keys
+    .map((index) => ({ index, value: row[`c${index + 1}`] }))
+    .filter((item): item is { index: number; value: number } => typeof item.value === "number");
   if (!values.length) {
     return (
       <div className="telemetry-tooltip">
         <strong>{formatDateTime(new Date(Number(label)).toISOString())}</strong>
-        <span className="muted">No data</span>
+        <span className="muted">{t("telemetry.noDataAtPoint")}</span>
       </div>
     );
   }
   const minimum = values.reduce((left, right) => (left.value <= right.value ? left : right));
   const maximum = values.reduce((left, right) => (left.value >= right.value ? left : right));
-  const selected = selectedCell === null ? null : row[`c${selectedCell + 1}`];
+  const duplicateGroups = groupCellValues(values.map((item) => item.value)).filter((group) => group.indices.length > 1);
   return (
     <div className="telemetry-tooltip telemetry-tooltip-cell">
       <strong>{formatDateTime(new Date(Number(label)).toISOString())}</strong>
-      <div className="telemetry-tooltip-row">
-        <span className="telemetry-tooltip-name"><i style={{ background: "#64748b" }} />Min · Cell {minimum.index + 1}</span>
-        <b>{formatNumber(minimum.value, " mV")}</b>
+      {relativeMode ? <span className="telemetry-tooltip-note">{t("telemetry.relativeTooltipNote")}</span> : null}
+      <div className="telemetry-tooltip-summary">
+        <span>{t("telemetry.min")} · C{minimum.index + 1} <b>{formatNumber(minimum.value, " mV")}</b></span>
+        <span>{t("telemetry.max")} · C{maximum.index + 1} <b>{formatNumber(maximum.value, " mV")}</b></span>
       </div>
-      <div className="telemetry-tooltip-row">
-        <span className="telemetry-tooltip-name"><i style={{ background: "#7c3aed" }} />Max · Cell {maximum.index + 1}</span>
-        <b>{formatNumber(maximum.value, " mV")}</b>
+      <div className="telemetry-tooltip-cell-list">
+        {values.map(({ index, value }) => (
+          <div className={`telemetry-tooltip-row${selectedCell === index ? " is-selected" : ""}`} key={index}>
+            <span className="telemetry-tooltip-name"><i style={{ background: "#0f766e" }} />{t("telemetry.cellNumber", { n: String(index + 1).padStart(2, "0") })}</span>
+            <b>{formatNumber(value, " mV")}{relativeMode ? ` (${formatNumber(row[`r${index + 1}`], " mV")} Δ)` : ""}</b>
+          </div>
+        ))}
       </div>
-      {selected !== null && typeof selected === "number" ? (
-        <div className="telemetry-tooltip-row">
-          <span className="telemetry-tooltip-name"><i style={{ background: "#0f766e" }} />Cell {selectedCell! + 1}</span>
-          <b>{formatNumber(selected, " mV")}</b>
+      {duplicateGroups.length ? (
+        <div className="telemetry-tooltip-note">
+          {duplicateGroups.map((group) => t("telemetry.overlapCount", {
+            value: formatNumber(group.value, " mV"),
+            n: group.indices.length,
+          })).join(" · ")}
         </div>
       ) : null}
     </div>
@@ -138,6 +151,8 @@ interface TelemetryChartProps {
   height?: number;
   cellTooltip?: boolean;
   selectedCell?: number | null;
+  cellKeys?: number[];
+  relativeMode?: boolean;
   footer?: ReactNode;
   showLegend?: boolean;
 }
@@ -154,6 +169,8 @@ export function TelemetryChart({
   height = 240,
   cellTooltip = false,
   selectedCell = null,
+  cellKeys,
+  relativeMode = false,
   footer,
   showLegend = true,
 }: TelemetryChartProps) {
@@ -211,7 +228,7 @@ export function TelemetryChart({
               />
               <Tooltip
                 content={cellTooltip
-                  ? <CellTooltip selectedCell={selectedCell} />
+                  ? <CellTooltip selectedCell={selectedCell} cellKeys={cellKeys} relativeMode={relativeMode} />
                   : <TelemetryTooltip unit={unit} />}
                 cursor={{ stroke: "#98a2b3", strokeDasharray: "3 3" }}
                 wrapperStyle={{ outline: "none" }}
@@ -224,6 +241,7 @@ export function TelemetryChart({
                   name={item.name}
                   stroke={item.color}
                   strokeWidth={item.width ?? 1.6}
+                  strokeOpacity={item.opacity ?? 1}
                   strokeDasharray={item.dashed ? "5 4" : undefined}
                   dot={false}
                   activeDot={cellTooltip ? false : { r: 3, strokeWidth: 0 }}

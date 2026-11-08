@@ -70,15 +70,38 @@ export function packChartData(history: TelemetryHistory): ChartPoint[] {
 export function cellChartData(history: TelemetryHistory): ChartPoint[] {
   const rows: ChartPoint[] = history.cells.map((point) => {
     const row: ChartPoint = { t: epochMs(point.measured_at) };
+    const numeric = Array.from({ length: 16 }, (_, index) => point.avg_mv[index])
+      .filter((value): value is number => typeof value === "number");
+    const average = numeric.length ? numeric.reduce((sum, value) => sum + value, 0) / numeric.length : null;
     for (let index = 0; index < 16; index += 1) {
-      row[`c${index + 1}`] = point.avg_mv[index] ?? null;
+      const value = point.avg_mv[index] ?? null;
+      row[`c${index + 1}`] = value;
       row[`min${index + 1}`] = point.min_mv[index] ?? null;
       row[`max${index + 1}`] = point.max_mv[index] ?? null;
+      row[`r${index + 1}`] = typeof value === "number" && average !== null
+        ? Number((value - average).toFixed(2))
+        : null;
     }
     return row;
   });
-  const keys = Array.from({ length: 16 }, (_, index) => [`c${index + 1}`, `min${index + 1}`, `max${index + 1}`]).flat();
+  const keys = Array.from({ length: 16 }, (_, index) => [`c${index + 1}`, `min${index + 1}`, `max${index + 1}`, `r${index + 1}`]).flat();
   return insertNullGaps(rows, keys, gapStepMs(history));
+}
+
+export interface CellValueGroup {
+  value: number;
+  indices: number[];
+}
+
+export function groupCellValues(values: Array<number | null | undefined>): CellValueGroup[] {
+  const groups = new Map<number, number[]>();
+  values.forEach((value, index) => {
+    if (typeof value !== "number") return;
+    const indices = groups.get(value) ?? [];
+    indices.push(index);
+    groups.set(value, indices);
+  });
+  return Array.from(groups, ([value, indices]) => ({ value, indices })).sort((left, right) => left.value - right.value);
 }
 
 export function temperatureChartData(history: TelemetryHistory): ChartPoint[] {
