@@ -235,10 +235,10 @@
 
 - **Project:** BatteryLifecycleApp / IoT Gateway
 - **Scope:** Read-only infrastructure audit, isolated development Mosquitto broker, MQTT contract v1, manual gateway/battery mapping, ingestion consumer, raw telemetry schema, 7-day retention job, Cloudflare WSS route verification and synthetic network tests.
-- **Status:** **IMPLEMENTED / TESTED / EXTERNAL WSS VERIFIED; REAL ESP32 HARDWARE PENDING; NOT PRODUCTION-DEPLOYED**.
+- **Status:** **IMPLEMENTED / TESTED / EXTERNAL WSS VERIFIED / REAL_BMS QA PASS; PRODUCTION PILOT BLOCKED PENDING CTO APPROVAL**.
 - **Branch:** `mission-017-server-mqtt`
 - **Evidence:** `docs/MISSION017_MQTT_SERVER.md`, `deploy/mqtt-dev/CLOUDFLARE_ROUTE.md`, `backend/app/mqtt/`, `backend/alembic/versions/e5f6a7b8c9d0_mqtt_gateway_telemetry.py`, `deploy/mqtt-dev/`.
-- **Latest commits:** `e91d290` pipeline, `3b2a304` route preparation, `b0c5195` external WSS evidence, `92024db` stability/ACL evidence.
+- **Latest commits:** `e91d290` pipeline, `3b2a304` route preparation, `b0c5195` external WSS evidence, `92024db` stability/ACL evidence, `88b0e4a` device credential readiness.
 
 #### Report
 
@@ -252,4 +252,6 @@
 - QA proof: `verify-wss-1794124282` sample id 9; stability samples `stability-1794124309-0/317-1/325-2`; unauthorized topic returned MQTT v5 `Not authorized`.
 - Existing `pinlab-app` health and `pinlab-pm` login remained **200**.
 - No public 1883/8883; no production database writes; no real hardware PASS claimed.
-- **Credential status:** development device credential `gw-000001` rotated 2026-11-08; protected local handoff file mode 600; no secret committed or logged. **Next:** ESP32-S3/APESS/PACE hardware integration and physical validation using the secure credential handoff.
+- **Credential status:** development device credential `gw-000001` rotated 2026-11-08; protected local handoff file mode 600; no secret committed or logged.
+- **Real BMS QA:** PASS. `GW-000001:boot23:0` (row 20) and `:boot23:2` (row 22), `source=REAL_BMS`, 52.573 V, 0.000 A, 35.66% SOC, 35.660/100 Ah, 16 cells, 5 temperatures, no duplicates.
+- **Production pilot:** BLOCKED pending CTO final approval. Proposed Passport `PL-APESS-0001` (PinLab Internal org 1); no production Passport, migration or consumer switch performed. Preflight backup and additive migration rehearsal PASS.

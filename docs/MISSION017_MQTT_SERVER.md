@@ -353,3 +353,53 @@ QoS: 1
 Battery slot: 0
 Battery: DEMO-MQTT-001
 ```
+
+## 16. REAL_BMS QA acceptance — 2026-11-08
+
+Read-only verification of real firmware telemetry in the development MQTT
+PostgreSQL database:
+
+| Field | `GW-000001:boot23:0` | `GW-000001:boot23:2` |
+|---|---|---|
+| Row id | 20 | 22 |
+| Source | REAL_BMS | REAL_BMS |
+| Gateway | GW-000001 | GW-000001 |
+| Slot | 0 | 0 |
+| Battery | DEMO-MQTT-001 | DEMO-MQTT-001 |
+| Organization | 1 | 1 |
+| Measured at | 2026-11-08 08:41:39+00 | 2026-11-08 08:41:57+00 |
+| Received at | 2026-11-08 08:41:49.796161+00 | 2026-11-08 08:42:00.613134+00 |
+| Pack voltage | 52.573 V | 52.573 V |
+| Current | 0.000 A | 0.000 A |
+| SOC | 35.66% | 35.66% |
+| SOH | NULL | NULL |
+| Capacity remaining/full | 35.660 / 100.000 Ah | 35.660 / 100.000 Ah |
+| Cells / temperatures | 16 / 5 | 16 / 5 |
+| Duplicate count | 1 | 1 |
+
+Cells: `[3283 ×15, 3281] mV`; temperatures: `[32.3, 29.0, 28.9, 29.0, 29.2] °C`.
+Consumer logs show successful persistence for both message IDs; no validation
+or persistence errors affected them. QA ingestion acceptance: **PASS**.
+
+Hardware telemetry remains `DEMO-MQTT-001` in the QA dataset. No production
+Battery Passport has been created.
+
+## 17. Mission 017-PROD readiness — no production changes
+
+- Production image/source: `rc-ac3e599` / `ac3e5998...`; DB head `c9d8e7f6a5b4`.
+- Production has no `telemetry_samples` table and no real APESS Passport.
+- Preflight backup:
+  `/home/picopiece/backups/pinlab-app/mission017-prod-preflight-20261108T151524Z/`.
+- Backup restored to isolated PostgreSQL 17: baseline 10 users, 3 orgs, 16
+  batteries, 14 inspections, 45 measurements, 2 attachments.
+- Additive migration `e5f6a7b8c9d0` rehearsal: PASS; existing counts unchanged;
+  new gateway/telemetry tables present.
+- No CI workflow deploys on main merge.
+- Approved topology: reuse existing Mosquitto/Cloudflare WSS; one production
+  consumer; stop QA consumer before cutover.
+- Proposed but **not created**: `PL-APESS-0001`, APESS ES-LV-5, LiFePO4,
+  51.2 V, 100 Ah, 5.12 kWh, 16S, serial NULL, PinLab Internal org 1.
+- Proposed mapping: `GW-000001 + slot 0 → PL-APESS-0001`.
+- Production consumer credential/ACL staged only; not applied to broker.
+- Production pilot remains **BLOCKED pending CTO final approval** of the
+  Battery Passport identity and exact deployment changes.
