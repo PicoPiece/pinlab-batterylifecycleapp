@@ -267,6 +267,7 @@
 - **Branch:** `mission-018-battery-analytics`
 - **Evidence:** `docs/MISSION018_BATTERY_ANALYTICS.md`, `backend/app/routers/telemetry.py`, `backend/app/telemetry.py`, `frontend/src/components/telemetry/`, `frontend/src/telemetry.css`, `frontend/e2e/mission018-analytics.mjs`.
 - **Screenshots:** `ProjectManagement/Mission018/screenshots/` (desktop overview, cell summary, all 16 cells, selected cell, history pack/cell/temperature, mobile overview/cells).
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/1
 
 #### Report
 

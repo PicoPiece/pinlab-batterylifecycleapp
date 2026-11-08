@@ -2,6 +2,7 @@
 
 - **Status:** Development complete; tests pass; **not deployed to production**.
 - **Feature branch:** `mission-018-battery-analytics`
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/1
 - **Production baseline at development time:** API/frontend `rc-ac3e599`; Alembic `e5f6a7b8c9d0`; consumer `pinlab-prod-mqtt-ingest`.
 - **Scope:** Battery Detail analytics for `PL-APESS-0001` using verified `REAL_BMS` telemetry only.
 
