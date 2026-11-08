@@ -282,3 +282,23 @@
 - Performance: on a synthetic 60,480-row PostgreSQL dataset, 7d pack+temperatures was ~1.9s and the full 7d cell series ~3.4s on demand; 24h full was ~0.6s. The 208-real-sample production-copy UI showed ~37.3 MB used JS heap and no mobile horizontal overflow.
 - **Android/Capacitor:** `npx cap sync android` completed successfully; Gradle APK build was not run because Java is unavailable in the agent environment. Responsive WebView layout was verified at 390 px; physical Android acceptance remains pending.
 - **Next gate:** separately authorized production API/frontend deployment; Android physical acceptance remains pending.
+
+### Mission 018.1 — REAL_BMS Integration, Classification & Demo-State Cleanup
+
+- **Project:** BatteryLifecycleApp / Web & Android
+- **Scope:** Backend-authoritative REAL/DEMO Passport classification, telemetry provenance separation, REAL_BMS Battery Health integration, context-aware demo labels and manual/telemetry separation.
+- **Status:** **IMPLEMENTED / TESTED / LOCAL PRODUCTION-COPY VERIFIED; NOT DEPLOYED**.
+- **Branch:** `mission-018.1-real-bms-classification`
+- **Evidence:** `docs/MISSION018_1_REAL_BMS_CLASSIFICATION.md`, `docs/MISSION018_1_CLASSIFICATION_INVENTORY.md`, `backend/alembic/versions/f6a7b8c9d0e1_battery_classification.py`, `backend/app/routers/batteries.py`, `backend/app/telemetry.py`, `frontend/src/pages/BatteryDetailPage.tsx`.
+- **Draft PR:** pending creation after commit (stacked on `mission-018-battery-analytics`).
+
+#### Report
+
+- No existing classification field existed. Added nullable `batteries.classification` with explicit `real`/`demo` values; `NULL` is unclassified, never auto-interpreted.
+- Added additive migration `f6a7b8c9d0e1` with an explicit reviewed inventory: 1 real (`PL-APESS-0001`, battery 17) and 16 demo/test records. No asset-prefix inference. Production migration/backfill not applied.
+- Added authorized manager/super-admin classification endpoint with existing security audit event `battery.classification.update`.
+- Latest telemetry now exposes backend classification, verified `REAL_BMS` source, `has_real_telemetry`, and separate `latest_any_source`/`latest_any_at` for SIMULATED provenance.
+- Battery Detail health now uses latest authorized REAL_BMS telemetry for SOC, voltage, current, capacity, five temperatures, Gateway state and last-received time; SOH remains N/A when NULL.
+- Removed static real-Passport demo badge/banner. DEMO Passports retain warnings; unclassified Passports are neutral. Sidebar/environment labels use backend real/demo counts; workspace label changed to PinLab Workspace.
+- Manual measurement history remains separately labelled and unchanged; telemetry does not create measurement records.
+- Tests: **60 backend tests passed**, **9 frontend tests passed**, production frontend build passed; **4/4 Mission 018.1 browser E2E passed** with 0 console errors. Production remains on `e5f6a7b8c9d0` and `rc-ac3e599`; consumer healthy.

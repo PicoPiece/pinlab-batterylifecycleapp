@@ -76,7 +76,7 @@ try {
   assert.match(contextText, /GW-000001/);
   assert.match(contextText, /REAL_BMS/);
   assert.match(await page.locator("#main-content").innerText(), /N\/A/);
-  const status = await page.locator(".telemetry-status").innerText();
+  const status = await page.locator(".telemetry-head .telemetry-status").innerText();
   assert.match(status, /ONLINE|STALE|OFFLINE|UNKNOWN/);
   pass("Overview summary + verified REAL_BMS context", `${status} · ${loadMs}ms navigation`);
 

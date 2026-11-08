@@ -57,6 +57,12 @@ export function BatteriesPage() {
     });
   }, [items, search, status, chemistry, source]);
 
+  const classificationCounts = useMemo(() => ({
+    real: filtered.filter((item) => item.classification === "real").length,
+    demo: filtered.filter((item) => item.classification === "demo").length,
+    unclassified: filtered.filter((item) => item.classification === null).length,
+  }), [filtered]);
+
   const openAsset = (id: number) => navigate(`/batteries/${id}`);
 
   if (loading) return <Loading label={t("common.loading")} />;
@@ -204,7 +210,9 @@ export function BatteriesPage() {
         )}
         <div className="table-foot">
           <span>{t("fleet.total", { n: filtered.length })}</span>
-          <span className="provenance-inline"><span className="source-dot source-mock" />{t("dashboard.demoDisclosure", { n: filtered.length })}</span>
+          <span className="provenance-inline">
+            {t("dashboard.classificationDisclosure", classificationCounts)}
+          </span>
         </div>
       </section>
     </div>

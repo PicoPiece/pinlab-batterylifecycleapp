@@ -96,6 +96,7 @@ export type BatteryStatus =
   | "quarantined";
 
 export type SpecificationStatus = "confirmed" | "partial" | "unknown";
+export type BatteryClassification = "real" | "demo";
 export type MeasurementMetric = "soc" | "soh" | "voltage" | "current" | "temperature";
 export type MeasurementSource = "manual" | "mock" | "bms_udan" | "inverter_modbus";
 export type MeasurementQuality = "measured" | "estimated" | "unknown";
@@ -123,6 +124,7 @@ export interface Battery {
   initial_energy_kwh: number | null;
   status: BatteryStatus;
   specification_status: SpecificationStatus;
+  classification: BatteryClassification | null;
   source: string | null;
   received_at: string | null;
   notes: string | null;
@@ -237,6 +239,9 @@ export interface FleetHealth {
 
 export interface DashboardSummary {
   total_batteries: number;
+  real_batteries: number;
+  demo_batteries: number;
+  unclassified_batteries: number;
   by_status: StatusCount[];
   soc_available: number;
   soh_available: number;
@@ -344,6 +349,11 @@ export interface TelemetrySample {
 export interface TelemetryLatest {
   battery_id: number;
   asset_id: string;
+  battery_classification: BatteryClassification | null;
+  has_real_telemetry: boolean;
+  telemetry_source: string | null;
+  latest_any_source: string | null;
+  latest_any_at: string | null;
   gateway: TelemetryGateway | null;
   sample: TelemetrySample | null;
   server_time: string;

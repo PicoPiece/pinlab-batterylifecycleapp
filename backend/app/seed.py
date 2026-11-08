@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import SessionLocal
 from app.models import (
+    BatteryClassification,
     Battery,
     BatteryStatus,
     Inspection,
@@ -394,7 +395,12 @@ def seed_demo(db: Session, admin: User) -> None:
         measurements = item.get("measurements", [])
         inspection_data = item.get("inspection")
         battery_data = {key: value for key, value in item.items() if key not in ("measurements", "inspection")}
-        battery = Battery(**battery_data, created_by_id=admin.id, updated_by_id=admin.id)
+        battery = Battery(
+            **battery_data,
+            classification=BatteryClassification.demo,
+            created_by_id=admin.id,
+            updated_by_id=admin.id,
+        )
         db.add(battery)
         db.flush()
         record_event(

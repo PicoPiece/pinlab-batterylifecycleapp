@@ -7,7 +7,7 @@ import { SpecBadge, StatusBadge } from "../components/StatusBadge";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { formatBytes, formatDate, formatDateTime, formatNumber } from "../format";
 const TelemetryDashboard = lazy(() => import("../components/telemetry/TelemetryDashboard").then((module) => ({ default: module.TelemetryDashboard })));
-import type { Attachment, Battery, Inspection, LifecycleEvent, Measurement, MeasurementMetric } from "../types";
+import type { Attachment, Battery, Inspection, LifecycleEvent, Measurement, MeasurementMetric, TelemetryLatest } from "../types";
 
 const METRICS: MeasurementMetric[] = ["soc", "soh", "voltage", "current", "temperature"];
 const UNITS: Record<MeasurementMetric, string> = {
@@ -23,7 +23,7 @@ type Tab = (typeof TABS)[number];
 export function BatteryDetailPage() {
   const { id } = useParams();
   const batteryId = Number(id);
-  const { canWrite } = useAuth();
+  const { canWrite, access } = useAuth();
   const { t } = useI18n();
   const [params, setParams] = useSearchParams();
   const rawTab = params.get("tab");
@@ -39,6 +39,11 @@ export function BatteryDetailPage() {
   const [showMeasurement, setShowMeasurement] = useState(false);
   const [measurementError, setMeasurementError] = useState("");
   const [attachmentError, setAttachmentError] = useState("");
+  const [telemetry, setTelemetry] = useState<TelemetryLatest | null>(null);
+  const [telemetryLoading, setTelemetryLoading] = useState(true);
+  const [telemetryError, setTelemetryError] = useState("");
+  const [classificationSaving, setClassificationSaving] = useState(false);
+  const [classificationError, setClassificationError] = useState("");
   const [measurement, setMeasurement] = useState({
     metric: "soc" as MeasurementMetric,
     value: "",
@@ -79,14 +84,78 @@ export function BatteryDetailPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!Number.isFinite(batteryId)) return;
+    let active = true;
+    let controller: AbortController | null = null;
+    const refresh = async (initial = false) => {
+      controller?.abort();
+      controller = new AbortController();
+      if (initial) setTelemetryLoading(true);
+      try {
+        const data = await api.latestTelemetry(batteryId, controller.signal);
+        if (active) {
+          setTelemetry(data);
+          setTelemetryError("");
+        }
+      } catch (error) {
+        const aborted = typeof error === "object" && error !== null && "name" in error && (error as { name?: string }).name === "AbortError";
+        if (active && !aborted) {
+          setTelemetryError(error instanceof ApiError ? error.detail : t("common.error"));
+        }
+      } finally {
+        if (active && initial) setTelemetryLoading(false);
+      }
+    };
+    setTelemetry(null);
+    setTelemetryLoading(true);
+    void refresh(true);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 15_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      active = false;
+      controller?.abort();
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [batteryId, t]);
+
   if (loading) return <Loading label={t("common.loading")} />;
   if (error) return <ErrorState message={error} />;
   if (!battery) return null;
 
   const writer = canWrite;
+  const canClassify = Boolean(access?.is_super_admin || access?.is_manager);
   const latestSoh = latest.soh ?? null;
   const evidenceReady = inspections.length > 0 && attachments.length > 0;
   const source = latestSoh?.source ?? latest.soc?.source;
+  const telemetrySample = telemetry?.sample ?? null;
+  const gatewayStatus = telemetry?.gateway?.connectivity.status ?? "unknown";
+  const classificationKey = battery.classification ?? "unclassified";
+  const isRealPassport = battery.classification === "real";
+  const isDemoPassport = battery.classification === "demo";
+  const temperatureMin = telemetrySample?.temperatures_c.length ? Math.min(...telemetrySample.temperatures_c) : null;
+  const temperatureMax = telemetrySample?.temperatures_c.length ? Math.max(...telemetrySample.temperatures_c) : null;
+  const showManualHealth = !isRealPassport && !telemetrySample;
+
+  const saveClassification = async (value: string) => {
+    if (value !== "real" && value !== "demo") return;
+    setClassificationSaving(true);
+    setClassificationError("");
+    try {
+      const updated = await api.setBatteryClassification(battery.id, value);
+      setBattery(updated);
+    } catch (error) {
+      setClassificationError(error instanceof ApiError ? error.detail : t("common.error"));
+    } finally {
+      setClassificationSaving(false);
+    }
+  };
 
   const setTab = (tab: Tab) => {
     setParams(tab === "overview" ? {} : { tab }, { replace: true });
@@ -149,7 +218,7 @@ export function BatteryDetailPage() {
             <h2>{battery.asset_id}</h2>
             <StatusBadge status={battery.status} />
             <SpecBadge status={battery.specification_status} />
-            <span className="badge badge-preview">{t("passport.demoProfile")}</span>
+            <span className={`badge badge-classification-${classificationKey}`}>{t(`classification.${classificationKey}`)}</span>
           </div>
           <p className="muted">
             {battery.model ?? "—"} · {battery.manufacturer ?? "—"} · {battery.chemistry ?? "—"}
@@ -166,6 +235,26 @@ export function BatteryDetailPage() {
           ) : null}
         </div>
       </div>
+
+      {canClassify ? (
+        <div className="classification-bar">
+          <label className="field classification-field">
+            <span>{t("passport.classification")}</span>
+            <select
+              className="select select-sm"
+              value={battery.classification ?? ""}
+              onChange={(event) => void saveClassification(event.target.value)}
+              disabled={classificationSaving}
+            >
+              {battery.classification === null ? <option value="" disabled>{t("classification.unclassified")}</option> : null}
+              <option value="real">{t("classification.realLong")}</option>
+              <option value="demo">{t("classification.demoLong")}</option>
+            </select>
+          </label>
+          {classificationSaving ? <span className="muted small">{t("common.loading")}</span> : null}
+          {classificationError ? <span className="form-error">{classificationError}</span> : null}
+        </div>
+      ) : null}
 
       <div className="passport-summary-grid">
         <section className="card passport-card">
@@ -186,49 +275,103 @@ export function BatteryDetailPage() {
             <div><dt>{t("passport.created")}</dt><dd>{formatDateTime(battery.created_at)}</dd></div>
             <div><dt>{t("passport.updated")}</dt><dd>{formatDateTime(battery.updated_at)}</dd></div>
           </dl>
-          <div className="demo-banner">{t("passport.demoBanner")}</div>
+          {isDemoPassport ? <div className="demo-banner">{t("passport.demoBanner")}</div> : null}
+          {battery.classification === null ? <div className="guardrail-note"><span aria-hidden="true">!</span><p>{t("passport.unclassifiedBanner")}</p></div> : null}
         </section>
 
         <section className="card health-card">
           <div className="card-head">
             <div>
               <span className="eyebrow">{t("passport.health")}</span>
-              <h3>{t("passport.latest")}</h3>
+              <h3>{telemetrySample || isRealPassport ? t("passport.telemetryHealth") : t("passport.latestManual")}</h3>
             </div>
-            {latestSoh ? <span className="badge badge-preview">{t("common.simulated")}</span> : null}
+            {telemetrySample ? <span className="badge badge-source-bms_udan">{t("passport.realTelemetry")}</span> : null}
+            {telemetrySample ? <span className={`telemetry-status telemetry-status-${gatewayStatus}`}>{t(`telemetry.${gatewayStatus}`)}</span> : null}
           </div>
-          <div className="grid-2 compact">
-            {(["soc", "soh"] as const).map((metric) => {
-              const item = latest[metric];
-              return (
-                <div className="measure-card" key={metric}>
-                  <span>{metric.toUpperCase()}</span>
-                  <strong>{item ? formatNumber(item.value, item.unit) : t("passport.noMeasurement")}</strong>
-                  {item ? (
-                    <>
-                      <div className="provenance-row">
-                        <span className={`badge badge-source-${item.source}`}>{t(`source.${item.source}`)}</span>
-                        <span className={`badge badge-quality-${item.quality}`}>{t(`quality.${item.quality}`)}</span>
-                        {item.source === "mock" ? <span className="badge badge-simulated">{t("common.simulated")}</span> : null}
-                      </div>
-                      <small>{formatDateTime(item.measured_at)}</small>
-                    </>
-                  ) : <small>{t("passport.noMeasurementHint")}</small>}
+
+          {telemetryLoading && isRealPassport ? <Loading label={t("common.loading")} /> : null}
+          {telemetryError && isRealPassport ? <div className="form-error">{telemetryError}</div> : null}
+
+          {telemetrySample ? (
+            <>
+              <div className="grid-2 compact">
+                <div className="measure-card">
+                  <span>SOC</span>
+                  <strong>{formatNumber(telemetrySample.soc_pct, "%")}</strong>
+                  <div className="provenance-row">
+                    <span className="badge badge-source-bms_udan">{telemetrySample.source}</span>
+                  </div>
+                  <small>{formatDateTime(telemetrySample.measured_at)}</small>
                 </div>
-              );
-            })}
-          </div>
-          <div className="metric-strip">
-            {METRICS.filter((metric) => metric !== "soc" && metric !== "soh").map((metric) => {
-              const item = latest[metric];
-              return (
-                <div className="metric-mini" key={metric}>
-                  <span>{t(`monitoring.${metric}`)}</span>
-                  <strong>{item ? formatNumber(item.value, ` ${item.unit}`) : t("common.noData")}</strong>
+                <div className="measure-card">
+                  <span>SOH</span>
+                  <strong>{telemetrySample.soh_pct === null ? t("telemetry.notAvailable") : formatNumber(telemetrySample.soh_pct, "%")}</strong>
+                  <small>{telemetrySample.soh_pct === null ? t("passport.sohUnavailable") : formatDateTime(telemetrySample.measured_at)}</small>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+              <div className="metric-strip">
+                <div className="metric-mini"><span>{t("telemetry.packVoltage")}</span><strong>{formatNumber(telemetrySample.pack_voltage_v, " V")}</strong></div>
+                <div className="metric-mini"><span>{t("telemetry.packCurrent")}</span><strong>{formatNumber(telemetrySample.pack_current_a, " A")}</strong></div>
+                <div className="metric-mini"><span>{t("telemetry.remainingCapacity")}</span><strong>{formatNumber(telemetrySample.capacity_remaining_ah, " Ah")} / {formatNumber(telemetrySample.capacity_full_ah, " Ah")}</strong></div>
+                <div className="metric-mini"><span>{t("monitoring.temperature")}</span><strong>{formatNumber(temperatureMin, " °C")} – {formatNumber(temperatureMax, " °C")}</strong></div>
+              </div>
+              <div className="telemetry-health-temps" aria-label={t("monitoring.temperature")}>
+                {telemetrySample.temperatures_c.map((value, index) => (
+                  <span key={index}>{t("telemetry.temperatureSensor", { n: index + 1 })} <b>{formatNumber(value, " °C")}</b></span>
+                ))}
+              </div>
+              <div className="telemetry-health-meta">
+                <span><b>{t("telemetry.gateway")}</b> {telemetry?.gateway?.gateway_id ?? "—"}</span>
+                <span><b>{t("telemetry.source")}</b> {telemetrySample.source}</span>
+                <span><b>{t("telemetry.lastReceivedLabel")}</b> {formatDateTime(telemetrySample.received_at)}</span>
+                <Link className="text-link" to={`/batteries/${battery.id}?tab=analytics`}>{t("passport.openAnalytics")} →</Link>
+              </div>
+              {isDemoPassport ? <div className="guardrail-note"><span aria-hidden="true">!</span><p>{t("passport.demoRealWarning")}</p></div> : null}
+              {!isDemoPassport && telemetry?.latest_any_source === "SIMULATED" ? <div className="guardrail-note"><span aria-hidden="true">!</span><p>{t("passport.simulatedIncoming")}</p></div> : null}
+            </>
+          ) : isRealPassport ? (
+            <div className="stack">
+              <EmptyState title={t("passport.noTelemetry")} detail={t("passport.noTelemetryHint")} />
+              {telemetry?.latest_any_source === "SIMULATED" ? <div className="guardrail-note"><span aria-hidden="true">!</span><p>{t("passport.simulatedIncoming")}</p></div> : null}
+              <Link className="btn btn-ghost" to={`/batteries/${battery.id}?tab=analytics`}>{t("passport.openAnalytics")}</Link>
+            </div>
+          ) : showManualHealth ? (
+            <>
+              <div className="grid-2 compact">
+                {(["soc", "soh"] as const).map((metric) => {
+                  const item = latest[metric];
+                  return (
+                    <div className="measure-card" key={metric}>
+                      <span>{metric.toUpperCase()}</span>
+                      <strong>{item ? formatNumber(item.value, item.unit) : t("passport.noMeasurement")}</strong>
+                      {item ? (
+                        <>
+                          <div className="provenance-row">
+                            <span className={`badge badge-source-${item.source}`}>{t(`source.${item.source}`)}</span>
+                            <span className={`badge badge-quality-${item.quality}`}>{t(`quality.${item.quality}`)}</span>
+                            {item.source === "mock" ? <span className="badge badge-simulated">{t("common.simulated")}</span> : null}
+                          </div>
+                          <small>{formatDateTime(item.measured_at)}</small>
+                        </>
+                      ) : <small>{t("passport.noMeasurementHint")}</small>}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="metric-strip">
+                {METRICS.filter((metric) => metric !== "soc" && metric !== "soh").map((metric) => {
+                  const item = latest[metric];
+                  return (
+                    <div className="metric-mini" key={metric}>
+                      <span>{t(`monitoring.${metric}`)}</span>
+                      <strong>{item ? formatNumber(item.value, ` ${item.unit}`) : t("common.noData")}</strong>
+                    </div>
+                  );
+                })}
+              </div>
+              {telemetry?.latest_any_source === "SIMULATED" ? <div className="guardrail-note"><span aria-hidden="true">!</span><p>{t("passport.simulatedIncoming")}</p></div> : null}
+            </>
+          ) : null}
         </section>
       </div>
 
@@ -255,9 +398,10 @@ export function BatteryDetailPage() {
           <div className="grid-2">
             <section className="card">
               <div className="card-head">
-                <div><span className="eyebrow">{t("passport.measurementHistory")}</span><h3>{t("passport.records", { n: measurements.length })}</h3></div>
+                <div><span className="eyebrow">{t("passport.manualOnly")}</span><h3>{t("passport.records", { n: measurements.length })}</h3></div>
                 {writer ? <button className="btn btn-ghost" onClick={() => setShowMeasurement((value) => !value)}>{showMeasurement ? t("common.close") : `+ ${t("passport.addMeasurement")}`}</button> : null}
               </div>
+              <p className="muted small">{t("passport.manualOnlyHint")}</p>
               {showMeasurement ? (
                 <form className="inline-form" onSubmit={submitMeasurement}>
                   <div className="form-grid compact">
@@ -291,7 +435,7 @@ export function BatteryDetailPage() {
                   <div className="form-actions"><button className="btn btn-primary">{t("common.save")}</button></div>
                 </form>
               ) : null}
-              {measurements.length === 0 ? <EmptyState title={t("passport.noMeasurement")} detail={t("passport.noMeasurementHint")} /> : (
+              {measurements.length === 0 ? <EmptyState title={t("passport.noManualMeasurements")} detail={t("passport.manualOnlyHint")} /> : (
                 <div className="table-wrap">
                   <table className="data-table">
                     <thead><tr><th>{t("common.metric")}</th><th>{t("common.value")}</th><th>{t("common.source")}</th><th>{t("common.quality")}</th><th>{t("inspections.inspectedAt")}</th></tr></thead>
@@ -318,7 +462,7 @@ export function BatteryDetailPage() {
                   {!latest.soc || !latest.soh ? <li><span className="action-dot" /><div><strong>{t("attention.missing_soh")}</strong><span>{t("passport.noMeasurementHint")}</span></div></li> : null}
                   {inspections.length === 0 ? <li><span className="action-dot" /><div><strong>{t("passport.noInspection")}</strong><Link to={`/batteries/${battery.id}/inspections/new`}>{t("passport.logInspection")} →</Link></div></li> : null}
                   {attachments.length === 0 ? <li><span className="action-dot" /><div><strong>{t("passport.noEvidence")}</strong><span>{t("passport.evidenceHint")}</span></div></li> : null}
-                  {latest.soc && latest.soh && inspections.length > 0 && attachments.length > 0 ? <li><span className="action-dot done" /><div><strong>{t("common.evidenceAttached")}</strong><span>{t("passport.demoBanner")}</span></div></li> : null}
+                  {latest.soc && latest.soh && inspections.length > 0 && attachments.length > 0 ? <li><span className="action-dot done" /><div><strong>{t("common.evidenceAttached")}</strong><span>{isDemoPassport ? t("passport.demoBanner") : t("passport.manualOnlyHint")}</span></div></li> : null}
                 </ul>
               </section>
               <section className="card">

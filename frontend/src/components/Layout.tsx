@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { useI18n, type Lang } from "../i18n";
+import type { DashboardSummary } from "../types";
 
 const navItems = [
   { to: "/", key: "nav.overview", end: true },
@@ -35,7 +36,7 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [assetCount, setAssetCount] = useState<number | null>(null);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
@@ -71,17 +72,17 @@ export function Layout() {
 
   useEffect(() => {
     if (!user) {
-      setAssetCount(null);
+      setSummary(null);
       return;
     }
     let active = true;
     api.dashboard()
       .then((data) => {
         if (!active) return;
-        setAssetCount(data.total_batteries);
+        setSummary(data);
         setLastRefresh(new Date());
       })
-      .catch(() => active && setAssetCount(null));
+      .catch(() => active && setSummary(null));
     return () => {
       active = false;
     };
@@ -112,6 +113,22 @@ export function Layout() {
         : access?.can_write
           ? "technician"
           : "viewer";
+  const realBatteries = summary?.real_batteries ?? 0;
+  const demoBatteries = summary?.demo_batteries ?? 0;
+  const dataMode = realBatteries > 0
+    ? (demoBatteries > 0 ? "mixed" : "production")
+    : demoBatteries > 0
+      ? "demo"
+      : "unclassified";
+  const dataModeLabel = t(`nav.env${dataMode === "production" ? "Production" : dataMode === "mixed" ? "Mixed" : dataMode === "demo" ? "Demo" : "Unclassified"}`);
+  const datasetLabel = t(`nav.${dataMode === "production" ? "productionDataset" : dataMode === "mixed" ? "mixedDataset" : dataMode === "demo" ? "demoDataset" : "unclassifiedDataset"}`);
+  const dataNote = dataMode === "production"
+    ? t("nav.productionNote", { real: realBatteries, demo: demoBatteries })
+    : dataMode === "mixed"
+      ? t("nav.mixedNote", { real: realBatteries, demo: demoBatteries })
+      : dataMode === "demo"
+        ? t("nav.demoNote")
+        : t("nav.unclassifiedNote", { n: summary?.unclassified_batteries ?? 0 });
 
   return (
     <div className="app-shell">
@@ -138,7 +155,7 @@ export function Layout() {
             <small>{t("nav.workspace")}</small>
             <strong>{t("nav.agency")}</strong>
           </div>
-          <span className="workspace-dot" title={t("common.demo")} />
+          <span className={`workspace-dot workspace-dot-${dataMode}`} title={dataModeLabel} />
         </div>
 
         <nav className="main-nav" aria-label="Primary navigation" onClick={() => setMenuOpen(false)}>
@@ -161,9 +178,9 @@ export function Layout() {
         <div className="sidebar-spacer" />
         <div className="sidebar-data-card">
           <span className="eyebrow">{t("nav.dataMode")}</span>
-          <strong>{t("nav.demoDataset")}</strong>
-          <p>{t("nav.demoNote")}</p>
-          <span className="sidebar-status">{assetCount === null ? t("nav.demoDataset") : t("nav.assets", { n: assetCount })}</span>
+          <strong>{datasetLabel}</strong>
+          <p>{dataNote}</p>
+          <span className="sidebar-status">{summary === null ? t("common.noData") : t("nav.assets", { n: summary.total_batteries })}</span>
           <small className="sidebar-refresh">
             {lastRefresh
               ? t("common.lastRefresh", { time: lastRefresh.toLocaleTimeString() })
@@ -214,7 +231,7 @@ export function Layout() {
             <span className={`connection-pill ${online ? "connection-online" : "connection-offline"}`}>
               {online ? t("common.online") : t("common.offline")}
             </span>
-            <span className="env-pill">AGENCY PREVIEW</span>
+            <span className="env-pill">{dataModeLabel}</span>
             <span className="topbar-user">{user?.full_name}</span>
           </div>
         </header>
