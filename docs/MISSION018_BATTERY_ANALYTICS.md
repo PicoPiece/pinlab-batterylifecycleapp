@@ -229,6 +229,13 @@ Browser observations:
 - 24h chart visible: ~0.5–0.6 s in local Vite development mode.
 - 7d pack history visible: ~0.37 s on the 208-sample copy.
 - 390 px viewport: 0 px horizontal overflow.
+
+Android/Capacitor:
+
+- `npx cap sync android` completed successfully.
+- A Gradle debug APK build could not be run because Java is unavailable in this
+  agent environment; no Android binary was produced or deployed.
+- Physical Android WebView acceptance remains pending.
 - Idle development containers: API ~78 MB RAM / ~0.13% CPU; PostgreSQL
   ~157 MB RAM / ~0.00% CPU (`docker stats --no-stream`).
 

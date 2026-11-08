@@ -259,6 +259,7 @@
 - **Production real telemetry:** PASS. New `REAL_BMS` row id 1, message `GW-000001:boot24:227`, 52.534 V, 0.000 A, SOC 35.45%, 35.450/100.000 Ah, 16 cells, 5 temperatures; no duplicates. Existing business records unchanged; app/OpenProject health 200.
 - **Production retention:** 7-day `telemetry_samples` policy active daily at 03:45 via `deploy/mqtt-prod/retention.sh`.
 - **Production evidence:** `docs/MISSION017_PRODUCTION_DEPLOYMENT.md`; OpenProject work package `#56`, activity `230`.
+
 ### Mission 018 — PinLab Battery Analytics Dashboard
 
 - **Project:** BatteryLifecycleApp / Web & Android
@@ -279,4 +280,5 @@
 - Latest polling is 15s and visible-only; history is on-demand; stale requests are aborted; charts are dynamically imported and missing data is rendered as gaps.
 - Verification: **53 backend tests passed**, **9 frontend tests passed**, production frontend build passed, and **12/12 browser E2E checks passed** against an isolated read-only copy of production. No production API/frontend, MQTT ingestion, Cloudflare route, firmware or Passport assignment was modified.
 - Performance: on a synthetic 60,480-row PostgreSQL dataset, 7d pack+temperatures was ~1.9s and the full 7d cell series ~3.4s on demand; 24h full was ~0.6s. The 208-real-sample production-copy UI showed ~37.3 MB used JS heap and no mobile horizontal overflow.
+- **Android/Capacitor:** `npx cap sync android` completed successfully; Gradle APK build was not run because Java is unavailable in the agent environment. Responsive WebView layout was verified at 390 px; physical Android acceptance remains pending.
 - **Next gate:** separately authorized production API/frontend deployment; Android physical acceptance remains pending.
