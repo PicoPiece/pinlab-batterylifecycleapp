@@ -1,10 +1,11 @@
 # PINLAB — BÁO CÁO TIẾN ĐỘ NỀN TẢNG QUẢN LÝ & GIÁM SÁT PIN
 
-**Ngày báo cáo:** 09/11/2026  
-**Giai đoạn:** Production Pilot — 1 bộ pin APESS thực tế  
-**Phụ trách kỹ thuật:** CTO / Engineering Team  
-**Phạm vi:** IoT Gateway, Battery Lifecycle Platform, Battery Analytics  
+**Ngày báo cáo:** 09/11/2026
+**Giai đoạn:** Production Pilot — 1 bộ pin APESS thực tế
+**Phụ trách kỹ thuật:** CTO / Engineering Team
+**Phạm vi:** IoT Gateway, Battery Lifecycle Platform, Battery Analytics
 **Nguồn tổng hợp:** Mission 017, 018, 018.1, 018.2 và Production evidence.
+**OpenProject:** Work package `#86` — https://pinlab-pm.picopiece.com/work_packages/86
 
 ## 1. Tóm tắt điều hành
 
@@ -86,8 +87,8 @@ Hệ thống đạt mức **Production Pilot — Functional PASS**, nhưng chưa
 | Production deployment | Đã triển khai Backend/Frontend | PASS |
 | Android native acceptance | Chưa kiểm thử APK đầy đủ trên thiết bị thật | PENDING |
 
-**Phiên bản Production:** `rc-933d8d6`  
-**Battery thực tế:** `PL-APESS-0001`  
+**Phiên bản Production:** `rc-933d8d6`
+**Battery thực tế:** `PL-APESS-0001`
 **Gateway:** `GW-000001`
 
 Hệ thống đã ghi nhận dữ liệu mới liên tục sau các lần cập nhật ứng dụng. Trong lần kiểm chứng gần nhất, PostgreSQL có các bản ghi mới từ Gateway và Dashboard đọc đúng dữ liệu thông qua FastAPI.

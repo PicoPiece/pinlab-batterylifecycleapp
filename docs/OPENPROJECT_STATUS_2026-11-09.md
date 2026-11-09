@@ -1,6 +1,7 @@
 # OpenProject Task Status — 2026-11-09
 
-- **Status:** Read-only snapshot; no OpenProject writes performed.
+- **Status:** Snapshot was read-only. One subsequent report publication created
+  work package `#86`; no existing work package was changed.
 - **Snapshot time:** 2026-11-09T02:19Z
 - **OpenProject:** https://pinlab-pm.picopiece.com
 - **Scope:** Current projects and work packages in the PinLab OpenProject instance.
@@ -77,7 +78,25 @@
 Project `11` exists but no `INT-01…INT-06` or other work packages are
 currently present.
 
-## 4. Observations
+## 4. Report publication
+
+The overall project report was published, with explicit user approval, as:
+
+- **Work package:** `#86`
+- **Subject:** `Production Pilot Status Report — 2026-11-09`
+- **Project:** PinLab Battery Lifecycle App (`pinlab-sw-001`, ID 8)
+- **Type:** Task
+- **Status:** In progress
+- **Priority:** Normal
+- **Author:** PinLab Agent
+- **Description:** full report content, 9,053 characters
+- **URL:** https://pinlab-pm.picopiece.com/work_packages/86
+
+After this write, the current totals are 23 work packages: 14 New,
+8 In progress and 1 Scheduled. No existing work package, time entry or project
+was modified.
+
+## 5. Observations
 
 - The OpenProject portfolio does not yet reflect the completed Mission 017,
   018, 018.1 and 018.2 work. App tasks #53, #56, #58, #59 remain **In
@@ -88,10 +107,11 @@ currently present.
 - Gateway & Cloud Integration was created but is empty.
 - Status discipline remains conservative: implementation and testing are not
   marked Closed, and no time entries were created.
-- No OpenProject work package, time entry, project or user was modified during
-  this report.
+- The read-only snapshot modified nothing. The separately approved publication
+  created only work package `#86`; no existing work package, time entry, project
+  or user was modified.
 
-## 5. Required follow-up
+## 6. Required follow-up
 
 Updating statuses, app evidence and Gateway/Cloud work packages requires an
 explicitly approved OpenProject write path. The previous sync attempt was

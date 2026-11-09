@@ -393,4 +393,5 @@
 - OpenProject snapshot: 7 projects and 22 work packages — 14 New, 7 In progress, 1 Scheduled, 0 Closed.
 - App project work packages #53, #56, #58, #59 and #77 remain In progress; #71 remains New; #70 is CEO-owned and untouched.
 - Project 11 `Gateway & Cloud Integration` exists but has no work packages.
-- No OpenProject object, time entry, user, application database or telemetry was mutated by the status report.
+- Published the overall project report to OpenProject as work package `#86` in `PinLab Battery Lifecycle App`; type Task, status In progress, description 9,053 characters, URL https://pinlab-pm.picopiece.com/work_packages/86.
+- The read-only snapshot mutated nothing; the approved publication created only `#86`. No existing work package, time entry, user, application database or telemetry was changed.
