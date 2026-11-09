@@ -215,7 +215,7 @@
 5. Production monitoring/alerting and off-host backup automation are incomplete.
 6. Mission 018/018.1 analytics and classification plus Mission 018.2 diagnostics UX are deployed in production; Android native acceptance remains pending. BLE, CAN, OTA and flash cache remain out of scope.
 7. Mission 007 has no evidence in available records.
-8. OpenProject portfolio sync is blocked on API permission.
+8. OpenProject portfolio sync remains blocked on API permission; the 2026-11-09 status report is read-only.
 9. No main merge/push without separate approval.
 
 ## Evidence index
@@ -223,7 +223,9 @@
 - App docs: `docs/P0A_ORGANIZATION_MIGRATION.md`, `docs/P0B_SECURITY_CHECKPOINT.md`,
   `docs/STAGE2_WEB_ACCESS_CONTROL.md`, `docs/CHECKPOINT2_QA_ANDROID.md`,
   `docs/RELEASE_READINESS_GAPS.md`, `docs/ROLE_PERMISSION_MATRIX.md`,
-  `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`.
+  `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`,
+  `docs/ACCESS_ADMINISTRATION_2026-11-09.md`,
+  `docs/OPENPROJECT_STATUS_2026-11-09.md`.
 - Project management: `ProjectManagement/MVP-Closure/`,
   `ProjectManagement/Mission004-CTO/`, `ProjectManagement/Mission005-QA/`,
   `ProjectManagement/Mission008A-Design/`, `Mission008B-QA/`,
@@ -370,3 +372,21 @@
 - Latest telemetry latency ~156 ms; backend ~83 MiB, frontend ~42 MiB, DB ~44 MiB. No high-load benchmark was run.
 - Existing APK contains remote server URL `https://pinlab-app.picopiece.com`, so it receives the new Web UI without rebuild; no APK was distributed. Physical Android acceptance remains pending.
 - Application-only rollback to `rc-ba0135c` is prepared; database restore/downgrade and telemetry deletion are not part of rollback.
+
+### Operations — Access Administration & OpenProject Status (2026-11-09)
+
+- **Status:** Access changes applied; OpenProject report read-only.
+- **Application code:** No application source or deployment change required.
+- **Evidence:** `docs/ACCESS_ADMINISTRATION_2026-11-09.md`, `docs/OPENPROJECT_STATUS_2026-11-09.md`.
+
+#### Report
+
+- Added `haidang@pinlab.com` (user 11) with global role `admin` and active PinLab Internal `pinlab_super_admin` membership; forced password change is enabled.
+- Corrected the initial `hdang@pinlab.com` email to `haidang@pinlab.com`; old email no longer authenticates.
+- Granted `chuongvo@pinlab.com` user 2 global role `admin` and active PinLab Internal `pinlab_super_admin` membership; existing password was not reset.
+- Production totals after the change: 11 users, 10 active, 1 disabled, 8 active memberships, 6 users requiring password change.
+- Membership and email changes are recorded in `security_audit_events` IDs 14, 15 and 16. User creation and global-role update endpoints still lack dedicated audit events; this remains a reviewed follow-up gap.
+- OpenProject snapshot: 7 projects and 22 work packages — 14 New, 7 In progress, 1 Scheduled, 0 Closed.
+- App project work packages #53, #56, #58, #59 and #77 remain In progress; #71 remains New; #70 is CEO-owned and untouched.
+- Project 11 `Gateway & Cloud Integration` exists but has no work packages.
+- No OpenProject object, time entry, user, application database or telemetry was mutated by the status report.
