@@ -1,8 +1,8 @@
 # Access Administration — 2026-11-09
 
 - **Status:** Applied in production.
-- **Scope:** Add one PinLab account; grant full platform administration to two
-  accounts; correct the new account email.
+- **Scope:** Add one PinLab account; grant full platform administration to
+  three accounts; correct the new account email.
 - **Application code:** Unchanged.
 - **Secrets:** No password, password hash or API token is included here.
 
@@ -12,12 +12,13 @@
 |---|---|---|---|
 | `haidang@pinlab.com` | New account, ID `11`; initial email was `hdang@pinlab.com`, then corrected | `admin` | PinLab Internal / `pinlab_super_admin` |
 | `chuongvo@pinlab.com` | Granted full platform administration | `admin` | PinLab Internal / `pinlab_super_admin` |
+| `phucnguyen@pinlab.com` | Granted full platform administration | `admin` | PinLab Internal / `pinlab_super_admin` |
 
-- `haidang@pinlab.com` is active and `must_change_password=true`.
-- Its temporary password is delivered only to the CTO and is not stored in Git
-  or this report.
-- `chuongvo@pinlab.com` retains the existing password; only role/membership was
-  changed.
+- `haidang@pinlab.com` initially required a password change; the flag is now
+  `false`, observed after the account owner completed the forced change.
+- The `haidang` temporary password is not stored in Git or this report.
+- `chuongvo@pinlab.com` and `phucnguyen@pinlab.com` retain their existing
+  passwords; only role/membership was changed.
 - Effective access is controlled by the organization membership, not by the
   legacy global role alone.
 
@@ -30,15 +31,15 @@
   `must_change_password=true`.
 - `/auth/access` is intentionally blocked until the forced password change is
   completed.
-- Database read-back confirms both accounts have:
+- Database read-back confirms all three accounts have:
   - global role `admin`
   - active `pinlab_super_admin` membership in PinLab Internal
-- Production account totals after the change:
+- Production account totals after the changes:
   - 11 users total
   - 10 active
   - 1 disabled
-  - 8 active organization memberships
-  - 6 users requiring password change
+  - 9 active organization memberships
+  - 5 users requiring password change
 
 ## 3. Audit trail
 
@@ -49,6 +50,7 @@ Recorded in `security_audit_events`:
 | 14 | `membership.create` | user 11 / `pinlab_super_admin` |
 | 15 | `membership.create` | user 2 / `pinlab_super_admin` |
 | 16 | `user.email.update` | user 11 / old and new email |
+| 17 | `membership.create` | user 3 / `pinlab_super_admin` |
 
 Security gap: the existing `POST /users` and `PATCH /users/{id}` endpoints do
 not emit a separate audit event for user creation or global-role changes. The

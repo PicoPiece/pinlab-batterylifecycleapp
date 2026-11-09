@@ -388,8 +388,9 @@
 - Added `haidang@pinlab.com` (user 11) with global role `admin` and active PinLab Internal `pinlab_super_admin` membership; forced password change is enabled.
 - Corrected the initial `hdang@pinlab.com` email to `haidang@pinlab.com`; old email no longer authenticates.
 - Granted `chuongvo@pinlab.com` user 2 global role `admin` and active PinLab Internal `pinlab_super_admin` membership; existing password was not reset.
-- Production totals after the change: 11 users, 10 active, 1 disabled, 8 active memberships, 6 users requiring password change.
-- Membership and email changes are recorded in `security_audit_events` IDs 14, 15 and 16. User creation and global-role update endpoints still lack dedicated audit events; this remains a reviewed follow-up gap.
+- Granted `phucnguyen@pinlab.com` user 3 global role `admin` and active PinLab Internal `pinlab_super_admin` membership; existing password was not reset.
+- Production totals after the changes: 11 users, 10 active, 1 disabled, 9 active memberships, 5 users requiring password change.
+- Membership and email changes are recorded in `security_audit_events` IDs 14–17. User creation and global-role update endpoints still lack dedicated audit events; this remains a reviewed follow-up gap.
 - OpenProject snapshot: 7 projects and 22 work packages — 14 New, 7 In progress, 1 Scheduled, 0 Closed.
 - App project work packages #53, #56, #58, #59 and #77 remain In progress; #71 remains New; #70 is CEO-owned and untouched.
 - Project 11 `Gateway & Cloud Integration` exists but has no work packages.
