@@ -61,7 +61,7 @@ try {
   await page.fill('input[type="password"]', env.ADMIN_PASSWORD);
   await page.getByRole("button", { name: /Đăng nhập|Enter preview/ }).click();
   await page.waitForURL(`${base}/`);
-  pass("Login", "local production-copy admin session");
+  pass("Login", "production admin session");
 
   const loadStart = Date.now();
   await page.goto(`${base}/batteries/17?tab=analytics`, { waitUntil: "networkidle" });
@@ -173,7 +173,7 @@ try {
   const report = {
     generated_at: new Date().toISOString(),
     base,
-    scope: "isolated production-copy UI verification; no production deployment",
+    scope: "production deployment verification",
     results,
     performance: {
       navigation_ms: loadMs,

@@ -1,8 +1,9 @@
 # Mission 018.2 — 16-Cell Chart Visualization Verification
 
-- **Status:** Development complete; not deployed to production.
+- **Status:** Development complete; deployed to production under Mission 018.2-PROD.
 - **Branch:** `mission-018.2-cell-chart-ux`
-- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4
+- **PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4 (merged)
+- **Production deployment:** `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`
 - **Production target investigated read-only:** https://pinlab-app.picopiece.com/batteries/17?tab=analytics
 
 ## 1. Root cause
@@ -257,10 +258,13 @@ Before/after implementation observations:
 - Sensitive production data was read-only.
 - No production schema, ingestion, ESP32, MQTT, Gateway assignment or data
   mutation occurred.
-- No production deployment was performed for this mission.
+- No production deployment occurred during implementation; the separately
+  approved deployment is recorded in
+  `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`.
 
 ## 9. Git
 
 - Branch: `mission-018.2-cell-chart-ux`
-- Draft PR: https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4
-- No production deployment until CTO approval.
+- PR: https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4 (merged)
+- Production deployment: `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md` (CTO
+  authorized 2026-11-09).

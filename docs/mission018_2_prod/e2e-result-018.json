@@ -1,0 +1,175 @@
+{
+  "generated_at": "2026-11-09T00:15:16.868Z",
+  "base": "https://pinlab-app.picopiece.com",
+  "scope": "production deployment verification",
+  "results": [
+    {
+      "name": "Login",
+      "status": "PASS",
+      "detail": "production admin session"
+    },
+    {
+      "name": "Overview summary + verified REAL_BMS context",
+      "status": "PASS",
+      "detail": "ONLINE · 2435ms navigation"
+    },
+    {
+      "name": "Desktop overview screenshot",
+      "status": "PASS",
+      "detail": "desktop-overview.png"
+    },
+    {
+      "name": "Cell Analysis summary + 16 current readings",
+      "status": "PASS",
+      "detail": "cell summary screenshot"
+    },
+    {
+      "name": "All 16 historical cell series",
+      "status": "PASS",
+      "detail": "256549 bytes include_cells=true"
+    },
+    {
+      "name": "Cell click highlights history",
+      "status": "PASS",
+      "detail": "Cell 01 highlighted above all 16 series"
+    },
+    {
+      "name": "History pack panels",
+      "status": "PASS",
+      "detail": "SOC / voltage / current"
+    },
+    {
+      "name": "History cell delta + individual cell",
+      "status": "PASS",
+      "detail": "Cell 16 selected"
+    },
+    {
+      "name": "History temperature panel",
+      "status": "PASS",
+      "detail": "5 temperature sensors"
+    },
+    {
+      "name": "24-hour range",
+      "status": "PASS",
+      "detail": "927ms to visible chart"
+    },
+    {
+      "name": "7-day range",
+      "status": "PASS",
+      "detail": "1031ms, 18 points"
+    },
+    {
+      "name": "Mobile layout",
+      "status": "PASS",
+      "detail": "390px, overflow 0px"
+    }
+  ],
+  "performance": {
+    "navigation_ms": 2435,
+    "browser_heap": {
+      "used": 10000000,
+      "total": 10000000
+    },
+    "telemetry_resources": [
+      {
+        "name": "latest",
+        "transfer": 904,
+        "duration": 297.90000009536743
+      },
+      {
+        "name": "latest",
+        "transfer": 905,
+        "duration": 288.7000002861023
+      },
+      {
+        "name": "history?range=1h&include_cells=false",
+        "transfer": 4228,
+        "duration": 292.5
+      }
+    ],
+    "api_samples": [
+      {
+        "url": "/batteries/17/telemetry/latest",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/latest",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/history?range=1h&include_cells=false",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/evidence?range=1h",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/history?range=1h&include_cells=true",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/history?range=24h&include_cells=false",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/evidence?range=24h",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/history?range=7d&include_cells=false",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/evidence?range=7d",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/latest",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/latest",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/history?range=1h&include_cells=false",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      },
+      {
+        "url": "/batteries/17/telemetry/evidence?range=1h",
+        "status": 200,
+        "content_length": 0,
+        "cache_control": ""
+      }
+    ],
+    "cell_history_bytes": 256549,
+    "range_24h_visible_ms": 927,
+    "range_7d_ms": 1031
+  },
+  "console_errors": []
+}

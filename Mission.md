@@ -202,7 +202,7 @@
 | Milestone | Status | Evidence / next deliverable |
 |---|---|---|
 | M1 — Internal Web/Android Release | **In progress / QA-ready** | RBAC and Web deployed; Android APK and emulator tests pass; physical Xiaomi acceptance pending |
-| M2 — Real BMS & Gateway PoC | **Production pilot + dashboard deployed** | Mission 017 production telemetry PASS; Mission 018/018.1 dashboard deployed to production; Android native acceptance pending |
+| M2 — Real BMS & Gateway PoC | **Production pilot + dashboard deployed** | Mission 017 production telemetry PASS; Mission 018/018.1/018.2 dashboard deployed to production; Android native acceptance pending |
 | M3 — Controlled Agency Pilot | **Not started** | Requires tenant-isolation acceptance, CTO approval, account mapping and external access policy |
 | M4 — Battery Health & Maintenance Lifecycle | **Not started** | Requires M2 telemetry and warning/issue workflow |
 
@@ -213,7 +213,7 @@
 3. Existing non-CTO production accounts are unmapped and have no app access.
 4. TEST accounts are labelled TEST and require password reset/change.
 5. Production monitoring/alerting and off-host backup automation are incomplete.
-6. Mission 018/018.1 analytics and classification are deployed in production; Android native acceptance remains pending. BLE, CAN, OTA and flash cache remain out of scope.
+6. Mission 018/018.1 analytics and classification plus Mission 018.2 diagnostics UX are deployed in production; Android native acceptance remains pending. BLE, CAN, OTA and flash cache remain out of scope.
 7. Mission 007 has no evidence in available records.
 8. OpenProject portfolio sync is blocked on API permission.
 9. No main merge/push without separate approval.
@@ -222,7 +222,8 @@
 
 - App docs: `docs/P0A_ORGANIZATION_MIGRATION.md`, `docs/P0B_SECURITY_CHECKPOINT.md`,
   `docs/STAGE2_WEB_ACCESS_CONTROL.md`, `docs/CHECKPOINT2_QA_ANDROID.md`,
-  `docs/RELEASE_READINESS_GAPS.md`, `docs/ROLE_PERMISSION_MATRIX.md`.
+  `docs/RELEASE_READINESS_GAPS.md`, `docs/ROLE_PERMISSION_MATRIX.md`,
+  `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`.
 - Project management: `ProjectManagement/MVP-Closure/`,
   `ProjectManagement/Mission004-CTO/`, `ProjectManagement/Mission005-QA/`,
   `ProjectManagement/Mission008A-Design/`, `Mission008B-QA/`,
@@ -330,9 +331,9 @@
 
 - **Project:** BatteryLifecycleApp / Web & Android
 - **Scope:** Read-only verification of the 16-cell analytics series mapping and overlap, followed by development-only cell-chart UX improvements.
-- **Status:** **IMPLEMENTED / TESTED / LOCAL PRODUCTION-COPY VERIFIED; NOT DEPLOYED**.
+- **Status:** **IMPLEMENTED / TESTED / LOCAL PRODUCTION-COPY VERIFIED; DEPLOYED IN 018.2-PROD**.
 - **Branch:** `mission-018.2-cell-chart-ux`
-- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4
+- **PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/4 (merged)
 - **Evidence:** `docs/MISSION018_2_CELL_CHART_UX.md`, `docs/mission018_2/`, `frontend/e2e/mission018-2-cell-chart.mjs`.
 
 #### Report
@@ -343,6 +344,29 @@
 - Added selected-cell highlighting above overlapping absolute lines, dimmed non-selected lines, complete synchronized tooltips (including identical values), overlap explanation, optional relative-to-average mode preserving actual tooltips, and mobile-safe tooltip sizing.
 - Added authenticated `GET /batteries/{id}/telemetry/evidence?range=1h|24h|7d` contract `diagnostic-evidence-v1`: bounded raw statistics, per-cell/temperature statistics, gaps, completeness, provenance and limitations. Example: `docs/mission018_2/example-evidence.json`.
 - Review correction: completeness uses the effective active Gateway assignment window (`monitoring_from_at`/`monitoring_to_at`), not pre-assignment time; no assignment is reported explicitly rather than as an outage.
-- Mobile: 360/390/430px verified, one Overview chart at a time, collapsible cell picker, touch-sized controls and health-first ordering. No production deployment.
+- Mobile: 360/390/430px verified, one Overview chart at a time, collapsible cell picker, touch-sized controls and health-first ordering. Production deployment is recorded in Mission 018.2-PROD below.
 - Existing Min/Max/Avg, All 16, custom selection, cell delta and 1h/24h/7d behavior preserved.
-- Tests: **64 backend tests passed**, **14 frontend tests passed**, Mission 018.2 E2E **5/5 passed**, plus Mission 018 regression **12/12** and Mission 018.1 **4/4**; before/after screenshots captured. No production deployment or data mutation.
+- Tests: **64 backend tests passed**, **14 frontend tests passed**, Mission 018.2 E2E **5/5 passed**, plus Mission 018 regression **12/12** and Mission 018.1 **4/4**; before/after screenshots captured. No production deployment or data mutation during implementation.
+
+### Mission 018.2-PROD — Battery Diagnostics UX Deployment
+
+- **Project:** BatteryLifecycleApp / Production Web
+- **Scope:** Deploy the approved Mission 018.2 diagnostics UI and evidence API to production; preserve PostgreSQL, MQTT, Gateway, Cloudflare and retention.
+- **Status:** **PASS** (Android native acceptance separately pending).
+- **Deployed source:** `933d8d63814d4c1eb690ba6c48ed7a6b03769b87`
+- **Images:** `pinlab-app-backend:rc-933d8d6`, `pinlab-app-frontend:rc-933d8d6`
+- **Evidence:** `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`, `docs/mission018_2_prod/`, `ProjectManagement/Mission018_2/after/`.
+
+#### Report
+
+- Preflight matched the approved source and prior `rc-ba0135c` baseline; DB was revision `f6a7b8c9d0e1` with **1 real / 16 demo**, and REAL_BMS telemetry was current.
+- Fresh preflight backup verified by isolated restore: `/home/picopiece/backups/pinlab-app/mission018_2-prod-preflight-20261109T001009Z/`; dump SHA256 `b3a902e165998faba7b542d63d28f5076e2ab7a0b1a523cc01943c5814bdae11`.
+- Deployed with `docker compose up -d --no-deps backend frontend`; only backend/frontend recreated. PostgreSQL container ID `f395bf86c2ae...` and MQTT consumer ID `a83a2827...` remained unchanged; consumer restarts `0`; no migration applied.
+- Public frontend serves the new bundle `/assets/index-Ci7StuDi.js`; app/API/OpenProject health HTTP `200`.
+- Production E2E: Mission 018.2 **5/5**, Mission 018 **12/12**, Mission 018.1 **4/4**; 0 console errors; 360/390/430 px zero horizontal overflow.
+- Latest API sample matched PostgreSQL row `2888`: `REAL_BMS`, battery 17, SOC `35.21%`, `52.521 V`, `0.000 A`, `35.210/100.000 Ah`, 16 cells, 5 temperatures, SOH `N/A`.
+- All 16 cell series render; overlap groups `3278×3 / 3279×2 / 3280×9 / 3281×2` are explained as legitimate identical values. Selection/highlighting, synchronized tooltips and Relative Voltage mode passed.
+- Evidence API `1h/24h/7d` passed with median latency ~195/~300/~343 ms; completeness 98.3%/94.6%/94.6% against the active Gateway-assignment window.
+- Latest telemetry latency ~156 ms; backend ~83 MiB, frontend ~42 MiB, DB ~44 MiB. No high-load benchmark was run.
+- Existing APK contains remote server URL `https://pinlab-app.picopiece.com`, so it receives the new Web UI without rebuild; no APK was distributed. Physical Android acceptance remains pending.
+- Application-only rollback to `rc-ba0135c` is prepared; database restore/downgrade and telemetry deletion are not part of rollback.
