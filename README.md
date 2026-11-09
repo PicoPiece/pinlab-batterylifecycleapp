@@ -2,7 +2,10 @@
 
 Web app quản lý vòng đời pin EV/ESS cho PinLab: battery registry, inspection, SOC/SOH, lifecycle history, evidence và dashboard.
 
-> **Trạng thái:** MVP local, đang chờ CTO review. Chưa cấu hình Cloudflare/public hostname.
+> **Trạng thái:** Production Pilot — Functional PASS (09/11/2026); Quality & Scale Audit pending.
+> **Public URL:** https://pinlab-app.picopiece.com
+> **Báo cáo tổng dự án:** `docs/PINLAB_PROJECT_STATUS_2026-11-09.md`
+> **Dữ liệu thực:** `PL-APESS-0001` / `GW-000001` / `REAL_BMS`.
 > **DEMO data:** mọi dữ liệu mẫu được ghi rõ `DEMO/SIMULATED`; không phải thông số đo thực tế.
 
 ## 1. Kiến trúc
@@ -31,7 +34,7 @@ Nginx (frontend container)
 | Network | `pinlab-app-network` |
 | Volumes | `pinlab_app_pgdata`, `pinlab_app_uploads` |
 
-Không dùng Kubernetes, microservices, MQTT broker, ThingsBoard hoặc Docker socket.
+Không dùng Kubernetes, microservices, ThingsBoard hoặc Docker socket. Production bổ sung MQTT broker/consumer và pipeline telemetry; xem báo cáo tổng dự án.
 
 ## 2. Chức năng MVP
 

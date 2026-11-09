@@ -1,8 +1,9 @@
 # PinLab Mission Register — Battery Lifecycle App
 
-**Last updated:** 2026-11-08 (+07)
+**Last updated:** 2026-11-09 (+07)
 **Repository:** `PicoPiece/pinlab-batterylifecycleapp`
-**Default remote branch for this work:** `mission-013-checkpoint2-qa` (not merged to `main`)
+**Default remote branch for this work:** `main`
+**Overall project report:** `docs/PINLAB_PROJECT_STATUS_2026-11-09.md`
 
 > **Mission tracking rule — effective 2026-11-08**
 >
@@ -21,10 +22,11 @@
 | Item | Current value |
 |---|---|
 | Production URL | `https://pinlab-app.picopiece.com` |
-| Production Web/backend image | `rc-ac3e599` |
-| Production Web/backend source commit | `ac3e5998df92f47abb94d467ddcbf6b8949d1d17` |
-| Production database | `pinlab-app` / PostgreSQL 17; Alembic `c9d8e7f6a5b4` |
-| Production release stage | Founder Preview / internal testing only |
+| Production Web/backend image | `rc-933d8d6` |
+| Production Web/backend source commit | `933d8d63814d4c1eb690ba6c48ed7a6b03769b87` |
+| Production database | `pinlab-app` / PostgreSQL 17; Alembic `f6a7b8c9d0e1` |
+| Production release stage | Production Pilot — Functional PASS; Quality & Scale Audit pending |
+| Overall project report | `docs/PINLAB_PROJECT_STATUS_2026-11-09.md` |
 | Latest Android APK | `artifacts/android/PinLab-BatteryLifecycle-0.4.0-internal-test-debug.apk` |
 | APK version | `0.4.0-internal-test` / versionCode 6 |
 | APK SHA256 | `765685d856274eee350619732b75dc6a89a4452dd488369db9f583b89deb8c8d` |
@@ -217,6 +219,7 @@
 7. Mission 007 has no evidence in available records.
 8. OpenProject portfolio sync remains blocked on API permission; the 2026-11-09 status report is read-only.
 9. No main merge/push without separate approval.
+10. Production Pilot is functionally complete; independent security/code audit, long-running reliability, multi-Gateway scale testing and physical Android acceptance remain pending. SOH is `N/A`, cell delta is observational, and no AI Diagnostic Agent/RAG is implemented.
 
 ## Evidence index
 
@@ -224,6 +227,7 @@
   `docs/STAGE2_WEB_ACCESS_CONTROL.md`, `docs/CHECKPOINT2_QA_ANDROID.md`,
   `docs/RELEASE_READINESS_GAPS.md`, `docs/ROLE_PERMISSION_MATRIX.md`,
   `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`,
+  `docs/PINLAB_PROJECT_STATUS_2026-11-09.md`,
   `docs/ACCESS_ADMINISTRATION_2026-11-09.md`,
   `docs/OPENPROJECT_STATUS_2026-11-09.md`.
 - Project management: `ProjectManagement/MVP-Closure/`,
