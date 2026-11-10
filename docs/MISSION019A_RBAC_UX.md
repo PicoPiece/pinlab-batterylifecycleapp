@@ -1,6 +1,6 @@
 # Mission 019A — CTO RBAC & UX Decision
 
-- **Status:** **MERGED TO MAIN; NOT DEPLOYED**
+- **Status:** **DEPLOYED TO PRODUCTION (frontend) — 2026-11-10**
 - **Branch:** `mission-019a-rbac-ux`
 - **Implementation commit:** `15d7eca`
 - **PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5 (merged)
@@ -8,8 +8,11 @@
 - **Base:** `179a299` (`main`)
 - **Scope:** Presentation-only Simple / Advanced diagnostics modes inside the
   existing Battery Passport.
-- **Production:** unchanged; no deployment, migration, restart or data mutation.
-- **Evidence:** `ProjectManagement/Mission019A/`, `docs/mission019a/`,
+- **Production backend:** unchanged `pinlab-app-backend:rc-933d8d6`
+- **Production frontend:** `pinlab-app-frontend:rc-c467f77`
+- **Production deployment evidence:** `docs/MISSION019A_PRODUCTION_DEPLOYMENT.md`
+- **Evidence:** `ProjectManagement/Mission019A/`,
+  `ProjectManagement/Mission019A_PROD/`, `docs/mission019a/`,
   `frontend/e2e/mission019a-simple-advanced.mjs`.
 
 ## 1. Decision implemented
@@ -155,7 +158,8 @@ Backend:
   build PASS; preview E2E **6/6**, Mission 018.2 preview **5/5**.
 - PR #5 marked ready and merged with a normal merge commit:
   `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57`.
-- No Production deployment was performed.
+- Production deployment was completed on 2026-11-10 as a frontend-only change;
+  see `docs/MISSION019A_PRODUCTION_DEPLOYMENT.md`.
 
 ## 8. Limitations and next gate
 
@@ -163,4 +167,4 @@ Backend:
 - This mission does not implement BMS configuration, Gateway control,
   diagnostic actions, maintenance writes or OTA.
 - Any future write action requires separately reviewed permissions and tests.
-- Production deployment requires separate CTO approval.
+- Any subsequent production change requires separate CTO approval.

@@ -22,10 +22,12 @@
 | Item | Current value |
 |---|---|
 | Production URL | `https://pinlab-app.picopiece.com` |
-| Production Web/backend image | `rc-933d8d6` |
-| Production Web/backend source commit | `933d8d63814d4c1eb690ba6c48ed7a6b03769b87` |
+| Production frontend image | `pinlab-app-frontend:rc-c467f77` |
+| Production backend image | `pinlab-app-backend:rc-933d8d6` |
+| Production frontend source commit | `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57` |
+| Production backend source commit | `933d8d63814d4c1eb690ba6c48ed7a6b03769b87` |
 | Production database | `pinlab-app` / PostgreSQL 17; Alembic `f6a7b8c9d0e1` |
-| Production release stage | Production Pilot — Functional PASS; Quality & Scale Audit pending |
+| Production release stage | Production Pilot + Mission 019A Simple/Advanced UX; Quality & Scale Audit pending |
 | Overall project report | `docs/PINLAB_PROJECT_STATUS_2026-11-09.md` |
 | Latest Android APK | `artifacts/android/PinLab-BatteryLifecycle-0.4.0-internal-test-debug.apk` |
 | APK version | `0.4.0-internal-test` / versionCode 6 |
@@ -230,7 +232,8 @@
   `docs/PINLAB_PROJECT_STATUS_2026-11-09.md`,
   `docs/ACCESS_ADMINISTRATION_2026-11-09.md`,
   `docs/OPENPROJECT_STATUS_2026-11-09.md`,
-  `docs/MISSION019A_RBAC_UX.md`, `docs/mission019a/`.
+  `docs/MISSION019A_RBAC_UX.md`,
+  `docs/MISSION019A_PRODUCTION_DEPLOYMENT.md`, `docs/mission019a/`.
 - Project management: `ProjectManagement/MVP-Closure/`,
   `ProjectManagement/Mission004-CTO/`, `ProjectManagement/Mission005-QA/`,
   `ProjectManagement/Mission008A-Design/`, `Mission008B-QA/`,
@@ -402,13 +405,13 @@
 
 - **Project:** BatteryLifecycleApp / Web & Android
 - **Scope:** Add presentation-only Simple View / Advanced Diagnostics modes inside the existing Battery Passport; audit existing role mappings.
-- **Status:** **MERGED TO MAIN; NOT DEPLOYED**.
+- **Status:** **DEPLOYED TO PRODUCTION (frontend) — 2026-11-10**.
 - **Branch:** `mission-019a-rbac-ux`
 - **Implementation commit:** `15d7eca`
 - **PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5 (merged)
 - **Merge commit:** `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57`
 - **Base:** `179a299` (`main`)
-- **Evidence:** `docs/MISSION019A_RBAC_UX.md`, `docs/mission019a/`, `frontend/e2e/mission019a-simple-advanced.mjs`.
+- **Evidence:** `docs/MISSION019A_RBAC_UX.md`, `docs/MISSION019A_PRODUCTION_DEPLOYMENT.md`, `docs/mission019a/`, `ProjectManagement/Mission019A_PROD/`, `frontend/e2e/mission019a-simple-advanced.mjs`.
 
 #### Report
 
@@ -421,4 +424,7 @@
 - Tests: **20/20 frontend**, **64/64 backend**, production build PASS; Mission 019A E2E **5/5**, Mission 018.2 regression **5/5**, Mission 018.1 **4/4**, Mission 018 **12/12**; 0 console errors; 360/390/430px no horizontal overflow.
 - Independent final review PASS; preview assets matched reviewed feature HEAD `d9679f6`; preview E2E 6/6 and Mission 018.2 preview 5/5.
 - PR #5 merged with normal merge commit `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57`.
-- Production is unchanged. No deployment, migration, restart or telemetry mutation.
+- Production deployment PASS on 2026-11-10: frontend `rc-c467f77` only; backend remains `rc-933d8d6`; DB revision `f6a7b8c9d0e1` unchanged; PostgreSQL/MQTT/Mosquitto/Cloudflare/OpenProject preserved.
+- Production E2E: Mission 019A 5/5, Mission 018.2 5/5, Mission 018.1 4/4, Mission 018 12/12; 0 console errors; 360/390/430px no overflow.
+- Latest API row matched PostgreSQL `14914`; MQTT ingestion continued across cutover without gaps. Preview stopped; temporary certificate/key removed.
+- Application-only rollback to frontend `rc-933d8d6` is prepared; database restore/downgrade and telemetry deletion are not part of rollback.
