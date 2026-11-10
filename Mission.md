@@ -405,6 +405,7 @@
 - **Status:** **IMPLEMENTED / TESTED IN DEVELOPMENT; NOT DEPLOYED**.
 - **Branch:** `mission-019a-rbac-ux`
 - **Implementation commit:** `15d7eca`
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5
 - **Base:** `179a299` (`main`)
 - **Evidence:** `docs/MISSION019A_RBAC_UX.md`, `docs/mission019a/`, `frontend/e2e/mission019a-simple-advanced.mjs`.
 

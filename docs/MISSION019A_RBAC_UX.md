@@ -3,6 +3,7 @@
 - **Status:** **IMPLEMENTED / TESTED IN DEVELOPMENT; NOT DEPLOYED**
 - **Branch:** `mission-019a-rbac-ux`
 - **Implementation commit:** `15d7eca`
+- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5
 - **Base:** `179a299` (`main`)
 - **Scope:** Presentation-only Simple / Advanced diagnostics modes inside the
   existing Battery Passport.
