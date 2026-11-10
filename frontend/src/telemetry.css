@@ -851,3 +851,185 @@
 @media (max-width: 640px) {
   .telemetry-mobile-chart { display: block; min-width: 0; }
 }
+
+/* Mission 019A — presentation-only Simple / Advanced diagnostics modes */
+.diagnostics-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.diagnostics-mode-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.diagnostics-mode-copy {
+  min-width: 0;
+  max-width: 720px;
+}
+
+.diagnostics-mode-copy .eyebrow {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.diagnostics-mode-copy p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.diagnostics-mode-switch {
+  flex: 0 0 auto;
+}
+
+.diagnostics-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.diagnostics-simple-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.diagnostics-simple-head h3 {
+  margin: 5px 0 4px;
+  font-size: 1.2rem;
+}
+
+.diagnostics-simple-head p {
+  max-width: 760px;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.diagnostics-simple-status {
+  display: flex;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.64rem;
+  white-space: nowrap;
+}
+
+.diagnostics-simple-metrics {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.diagnostics-simple-metric {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.diagnostics-simple-metric span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.56rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.diagnostics-simple-metric strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.12rem;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+.diagnostics-simple-metric small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.56rem;
+  line-height: 1.35;
+}
+
+.diagnostics-simple-context {
+  display: flex;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.diagnostics-simple-context b {
+  color: var(--text);
+  font-weight: 750;
+}
+
+.diagnostics-simple-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.diagnostics-simple-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.diagnostics-simple-footer strong {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.diagnostics-simple-footer p {
+  margin: 3px 0 0;
+}
+
+.diagnostics-simple-note {
+  margin: -3px 0 0;
+  color: var(--muted);
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 1100px) {
+  .diagnostics-simple-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .diagnostics-simple-charts { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 820px) {
+  .diagnostics-mode-bar { align-items: stretch; }
+  .diagnostics-mode-switch { align-self: flex-start; }
+  .diagnostics-simple-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .diagnostics-simple-head { flex-direction: column; }
+  .diagnostics-simple-status { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .diagnostics-simple-metric { padding: 10px; }
+  .diagnostics-simple-metric strong { font-size: 1rem; }
+  .diagnostics-simple-footer { align-items: flex-start; flex-direction: column; }
+  .diagnostics-simple-footer .btn { width: 100%; justify-content: center; }
+}

@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-11-10T07:00:40.589Z",
+  "base": "http://127.0.0.1:5185",
+  "mode": "development build; read-only production-copy API",
+  "results": [
+    {
+      "name": "Default Simple View",
+      "status": "PASS",
+      "detail": "fresh context, 6 key metrics, existing authorized latest + 24h history APIs"
+    },
+    {
+      "name": "Advanced Diagnostics",
+      "status": "PASS",
+      "detail": "existing overview, 16-cell/history controls and Diagnostic Evidence remain available"
+    },
+    {
+      "name": "Local preference",
+      "status": "PASS",
+      "detail": "Advanced preference persisted locally after reload"
+    },
+    {
+      "name": "Return to Simple",
+      "status": "PASS",
+      "detail": "Advanced and Simple can be switched without a backend setting"
+    },
+    {
+      "name": "Mobile Simple View",
+      "status": "PASS",
+      "detail": "360/390/430px, no horizontal overflow, clear technical-details entry"
+    }
+  ],
+  "telemetry_requests": [
+    "/api/v1/batteries/17/telemetry/history?range=1h&include_cells=false",
+    "/api/v1/batteries/17/telemetry/history?range=24h&include_cells=false",
+    "/api/v1/batteries/17/telemetry/latest"
+  ],
+  "console_errors": [],
+  "presentation_only": true,
+  "backend_changes": false
+}

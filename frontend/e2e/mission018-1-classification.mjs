@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { ensureDiagnosticsMode } from "./diagnostics-mode.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../..");
@@ -79,6 +80,7 @@ try {
   pass("DEMO Passport retains warnings", "DEMO badge + demo banner + manual measurement health");
 
   await page.goto(`${base}/batteries/17?tab=analytics`, { waitUntil: "networkidle" });
+  await ensureDiagnosticsMode(page, "advanced");
   await page.waitForTimeout(500);
   assert.ok(await page.locator(".telemetry-chart-card").count() >= 4);
   await page.screenshot({ path: path.join(screenshotDir, "real-analytics.png"), fullPage: true });

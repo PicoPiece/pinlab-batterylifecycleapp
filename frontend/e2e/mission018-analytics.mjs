@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { ensureDiagnosticsMode } from "./diagnostics-mode.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../..");
@@ -65,6 +66,7 @@ try {
 
   const loadStart = Date.now();
   await page.goto(`${base}/batteries/17?tab=analytics`, { waitUntil: "networkidle" });
+  await ensureDiagnosticsMode(page, "advanced");
   await page.locator(".telemetry-head h2").waitFor({ state: "visible" });
   await page.waitForTimeout(500);
   const loadMs = Date.now() - loadStart;
