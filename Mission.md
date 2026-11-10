@@ -404,7 +404,7 @@
 - **Scope:** Add presentation-only Simple View / Advanced Diagnostics modes inside the existing Battery Passport; audit existing role mappings.
 - **Status:** **IMPLEMENTED / TESTED IN DEVELOPMENT; NOT DEPLOYED**.
 - **Branch:** `mission-019a-rbac-ux`
-- **Implementation commit:** `de46883`
+- **Implementation commit:** `15d7eca`
 - **Base:** `179a299` (`main`)
 - **Evidence:** `docs/MISSION019A_RBAC_UX.md`, `docs/mission019a/`, `frontend/e2e/mission019a-simple-advanced.mjs`.
 

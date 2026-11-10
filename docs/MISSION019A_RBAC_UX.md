@@ -2,7 +2,7 @@
 
 - **Status:** **IMPLEMENTED / TESTED IN DEVELOPMENT; NOT DEPLOYED**
 - **Branch:** `mission-019a-rbac-ux`
-- **Implementation commit:** `de46883`
+- **Implementation commit:** `15d7eca`
 - **Base:** `179a299` (`main`)
 - **Scope:** Presentation-only Simple / Advanced diagnostics modes inside the
   existing Battery Passport.
