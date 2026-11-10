@@ -1,9 +1,10 @@
 # Mission 019A — CTO RBAC & UX Decision
 
-- **Status:** **IMPLEMENTED / TESTED IN DEVELOPMENT; NOT DEPLOYED**
+- **Status:** **MERGED TO MAIN; NOT DEPLOYED**
 - **Branch:** `mission-019a-rbac-ux`
 - **Implementation commit:** `15d7eca`
-- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5
+- **PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5 (merged)
+- **Merge commit:** `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57`
 - **Base:** `179a299` (`main`)
 - **Scope:** Presentation-only Simple / Advanced diagnostics modes inside the
   existing Battery Passport.
@@ -141,7 +142,22 @@ Backend:
 - `ProjectManagement/Mission019A/after/simple-mobile-430.png`
 - `ProjectManagement/Mission019A/e2e-result.json`
 
-## 7. Limitations and next gate
+## 7. Independent final review and merge
+
+- Verdict: **PASS**; no security-critical, data-integrity or functional
+  blocker found.
+- Diff: frontend presentation, tests and documentation only; no backend,
+  authorization, API, migration or secret changes.
+- Simple View calls the existing authorized latest + 24h history APIs with
+  `include_cells=false`; Advanced is lazy-mounted and preserves Mission 018.2.
+- Preview assets matched the reviewed feature HEAD `d9679f6` byte-for-byte.
+- Tests independently re-run: frontend **20/20**, backend **64/64**, production
+  build PASS; preview E2E **6/6**, Mission 018.2 preview **5/5**.
+- PR #5 marked ready and merged with a normal merge commit:
+  `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57`.
+- No Production deployment was performed.
+
+## 8. Limitations and next gate
 
 - Android physical-device acceptance remains pending.
 - This mission does not implement BMS configuration, Gateway control,

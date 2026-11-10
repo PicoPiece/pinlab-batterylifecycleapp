@@ -402,10 +402,11 @@
 
 - **Project:** BatteryLifecycleApp / Web & Android
 - **Scope:** Add presentation-only Simple View / Advanced Diagnostics modes inside the existing Battery Passport; audit existing role mappings.
-- **Status:** **IMPLEMENTED / TESTED IN DEVELOPMENT; NOT DEPLOYED**.
+- **Status:** **MERGED TO MAIN; NOT DEPLOYED**.
 - **Branch:** `mission-019a-rbac-ux`
 - **Implementation commit:** `15d7eca`
-- **Draft PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5
+- **PR:** https://github.com/PicoPiece/pinlab-batterylifecycleapp/pull/5 (merged)
+- **Merge commit:** `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57`
 - **Base:** `179a299` (`main`)
 - **Evidence:** `docs/MISSION019A_RBAC_UX.md`, `docs/mission019a/`, `frontend/e2e/mission019a-simple-advanced.mjs`.
 
@@ -418,4 +419,6 @@
 - Advanced diagnostics remain read-only. No BMS configuration, Gateway control, diagnostic write or maintenance action was added.
 - Role audit: 11 users, 10 active, 9 active memberships, 4 explicitly assigned PinLab super admins, no multi-organization memberships, 5 TEST accounts still forced to change password, and 1 active unmapped account with no battery access. No unexpected cross-organization exposure found.
 - Tests: **20/20 frontend**, **64/64 backend**, production build PASS; Mission 019A E2E **5/5**, Mission 018.2 regression **5/5**, Mission 018.1 **4/4**, Mission 018 **12/12**; 0 console errors; 360/390/430px no horizontal overflow.
+- Independent final review PASS; preview assets matched reviewed feature HEAD `d9679f6`; preview E2E 6/6 and Mission 018.2 preview 5/5.
+- PR #5 merged with normal merge commit `c467f7742c53e3d9bfe13a3768cc3c2788a0ab57`.
 - Production is unchanged. No deployment, migration, restart or telemetry mutation.
