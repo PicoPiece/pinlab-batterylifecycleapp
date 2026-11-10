@@ -6,7 +6,7 @@ import { useI18n } from "../i18n";
 import { SpecBadge, StatusBadge } from "../components/StatusBadge";
 import { EmptyState, ErrorState, Loading } from "../components/States";
 import { formatBytes, formatDate, formatDateTime, formatNumber } from "../format";
-const TelemetryDashboard = lazy(() => import("../components/telemetry/TelemetryDashboard").then((module) => ({ default: module.TelemetryDashboard })));
+const DiagnosticsView = lazy(() => import("../components/telemetry/DiagnosticsView").then((module) => ({ default: module.DiagnosticsView })));
 import type { Attachment, Battery, Inspection, LifecycleEvent, Measurement, MeasurementMetric, TelemetryLatest } from "../types";
 
 const METRICS: MeasurementMetric[] = ["soc", "soh", "voltage", "current", "temperature"];
@@ -525,7 +525,7 @@ export function BatteryDetailPage() {
       {activeTab === "analytics" ? (
         <section id="passport-panel-analytics" role="tabpanel" aria-labelledby="passport-tab-analytics" className="tab-panel">
           <Suspense fallback={<Loading label={t("telemetry.loading")} />}>
-            <TelemetryDashboard batteryId={battery.id} />
+            <DiagnosticsView batteryId={battery.id} />
           </Suspense>
         </section>
       ) : null}

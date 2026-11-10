@@ -1,6 +1,6 @@
 # PinLab Mission Register — Battery Lifecycle App
 
-**Last updated:** 2026-11-09 (+07)
+**Last updated:** 2026-11-10 (+07)
 **Repository:** `PicoPiece/pinlab-batterylifecycleapp`
 **Default remote branch for this work:** `main`
 **Overall project report:** `docs/PINLAB_PROJECT_STATUS_2026-11-09.md`
@@ -229,7 +229,8 @@
   `docs/MISSION018_2_PRODUCTION_DEPLOYMENT.md`,
   `docs/PINLAB_PROJECT_STATUS_2026-11-09.md`,
   `docs/ACCESS_ADMINISTRATION_2026-11-09.md`,
-  `docs/OPENPROJECT_STATUS_2026-11-09.md`.
+  `docs/OPENPROJECT_STATUS_2026-11-09.md`,
+  `docs/MISSION019A_RBAC_UX.md`, `docs/mission019a/`.
 - Project management: `ProjectManagement/MVP-Closure/`,
   `ProjectManagement/Mission004-CTO/`, `ProjectManagement/Mission005-QA/`,
   `ProjectManagement/Mission008A-Design/`, `Mission008B-QA/`,
@@ -396,3 +397,24 @@
 - Project 11 `Gateway & Cloud Integration` exists but has no work packages.
 - Published the overall project report to OpenProject as work package `#86` in `PinLab Battery Lifecycle App`; type Task, status In progress, description 9,053 characters, URL https://pinlab-pm.picopiece.com/work_packages/86.
 - The read-only snapshot mutated nothing; the approved publication created only `#86`. No existing work package, time entry, user, application database or telemetry was changed.
+
+### Mission 019A — CTO RBAC & UX Decision
+
+- **Project:** BatteryLifecycleApp / Web & Android
+- **Scope:** Add presentation-only Simple View / Advanced Diagnostics modes inside the existing Battery Passport; audit existing role mappings.
+- **Status:** **IMPLEMENTED / TESTED IN DEVELOPMENT; NOT DEPLOYED**.
+- **Branch:** `mission-019a-rbac-ux`
+- **Implementation commit:** `de46883`
+- **Base:** `179a299` (`main`)
+- **Evidence:** `docs/MISSION019A_RBAC_UX.md`, `docs/mission019a/`, `frontend/e2e/mission019a-simple-advanced.mjs`.
+
+#### Report
+
+- Simple View is the default in the Analytics tab: mobile-first health metrics plus 24h SOC and pack-voltage trends using the existing authorized latest/history APIs.
+- Advanced Diagnostics is reachable through a clear `Chi tiết kỹ thuật / Technical details` switch and preserves the Mission 018.2 dashboard, all 16 cell series, 16-cell history, Relative Voltage and Diagnostic Evidence.
+- View preference is local-only: `pinlab.diagnostics.mode` in `localStorage`; no backend state or API change.
+- No new roles, permission tables, RBAC layers or database migrations. Backend organization/battery authorization remains authoritative; UI visibility is not a security mechanism.
+- Advanced diagnostics remain read-only. No BMS configuration, Gateway control, diagnostic write or maintenance action was added.
+- Role audit: 11 users, 10 active, 9 active memberships, 4 explicitly assigned PinLab super admins, no multi-organization memberships, 5 TEST accounts still forced to change password, and 1 active unmapped account with no battery access. No unexpected cross-organization exposure found.
+- Tests: **20/20 frontend**, **64/64 backend**, production build PASS; Mission 019A E2E **5/5**, Mission 018.2 regression **5/5**, Mission 018.1 **4/4**, Mission 018 **12/12**; 0 console errors; 360/390/430px no horizontal overflow.
+- Production is unchanged. No deployment, migration, restart or telemetry mutation.

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { ensureDiagnosticsMode } from "./diagnostics-mode.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, "../..");
@@ -45,6 +46,7 @@ try {
   await page.getByRole("button", { name: /Đăng nhập|Enter preview/ }).click();
   await page.waitForURL(`${base}/`);
   await page.goto(`${base}/batteries/17?tab=analytics`, { waitUntil: "networkidle" });
+  await ensureDiagnosticsMode(page, "advanced");
   await page.waitForTimeout(500);
   await page.locator(".telemetry-primary-tabs button").nth(1).click();
   await page.waitForTimeout(250);
